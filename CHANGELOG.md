@@ -7,6 +7,7 @@
 - 版本与发布规范：`docs/design/versioning.md`。
 - 决策分级与禁止事项：`AGENTS.md`。
 - ADR 0001：节点级检查通过 SSH 只读采集（root 账号，节点清单由 kubectl 获取），见 `docs/decisions/0001-node-collection-via-ssh.md`。
+- 设计草案 v1：规则 schema（`docs/design/rule-schema.md`）、输出契约（`docs/design/output-contract.md`）、快照格式（`docs/design/snapshot-format.md`）。规则不读取部署源文件，无法判定的项输出 INFO。
 
 ### Changed
 - 设计文档移至 `docs/design/kready-design.md`。
