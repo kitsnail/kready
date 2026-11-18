@@ -9,6 +9,7 @@ import (
 	"github.com/scclabs/kready/internal/collect"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/scclabs/kready/internal/check"
@@ -180,21 +181,45 @@ func writeGroups(w io.Writer, results []check.Result, status check.Status, secti
 	for _, id := range order {
 		rs := groups[id]
 		fmt.Fprintf(w, "\n%s %s\n", section, label(rs[0]))
-		for _, r := range rs {
-			switch status {
-			case check.Fail:
-				fmt.Fprintf(w, "    %s  实际: %s  期望: %s\n", r.Target, r.Actual, r.Expect)
-			case check.Error:
+		switch status {
+		case check.Fail:
+			// 相同实际值的节点合并为一行，逐个列出节点名，不丢失“哪台是哪个值”。
+			for _, g := range groupByActual(rs) {
+				fmt.Fprintf(w, "    %s\n        实际: %s  期望: %s\n", strings.Join(g.targets, "、"), g.actual, rs[0].Expect)
+			}
+			fmt.Fprintf(w, "    影响: %s\n    处理: %s\n", orPending(rs[0].Impact), orPending(rs[0].Hint))
+		case check.Error:
+			for _, r := range rs {
 				fmt.Fprintf(w, "    %s  原因: %s\n", r.Target, r.Error)
-			case check.Info:
-				fmt.Fprintf(w, "    %s  当前: %s\n", r.Target, r.Actual)
+			}
+		case check.Info:
+			for _, g := range groupByActual(rs) {
+				fmt.Fprintf(w, "    %s  当前: %s\n", strings.Join(g.targets, "、"), g.actual)
 			}
 		}
-		// 影响与处理：规则未填写时显示占位，不编造内容（待逐项研究后补充）。
-		if status == check.Fail {
-			fmt.Fprintf(w, "    影响: %s\n    处理: %s\n", orPending(rs[0].Impact), orPending(rs[0].Hint))
-		}
 	}
+}
+
+// actualGroup 是同一取值的一组目标，保持首次出现的顺序。
+type actualGroup struct {
+	actual  string
+	targets []string
+}
+
+// groupByActual 把相同实际值的目标合并，避免同一个值在多个节点上重复多行。
+func groupByActual(rs []check.Result) []actualGroup {
+	var out []actualGroup
+	index := map[string]int{}
+	for _, r := range rs {
+		i, ok := index[r.Actual]
+		if !ok {
+			index[r.Actual] = len(out)
+			out = append(out, actualGroup{actual: r.Actual})
+			i = len(out) - 1
+		}
+		out[i].targets = append(out[i].targets, r.Target)
+	}
+	return out
 }
 
 // orPending 为空时返回占位文字，避免输出空的影响或处理。

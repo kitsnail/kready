@@ -442,3 +442,23 @@ func TestNodeCountIsNotJudged(t *testing.T) {
 		t.Errorf("结论应为正常，实际: %q", out2)
 	}
 }
+
+// 相同取值的节点合并为一行，且每个节点名都保留（不丢失“哪台是哪个值”）。
+func TestSameValueNodesAreMerged(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	code, out, _ := runArgs(t, "check", "--snapshot", dir)
+	if code != exitOK {
+		t.Fatalf("退出码 = %d", code)
+	}
+	// 正例快照中 NODE-05 在所有节点取值相同：应只出现一行，包含全部节点名。
+	count := strings.Count(out, "当前: active")
+	if count > 1 {
+		t.Errorf("相同取值应合并为一行，实际出现 %d 次: %s", count, out)
+	}
+	for _, name := range []string{"cp-1", "cp-2", "cp-3", "w-1", "w-2"} {
+		if !strings.Contains(out, name) {
+			t.Errorf("合并后应保留节点名 %s，实际: %s", name, out)
+		}
+	}
+}
