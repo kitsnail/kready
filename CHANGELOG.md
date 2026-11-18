@@ -6,6 +6,7 @@
 
 ### Changed
 - 仓库迁移至 `kitsnail/kready`，Go 模块路径同步改为 `github.com/kitsnail/kready`（`go.mod` 与全部 import）。旧仓库 `scclabs/kready` 已删除。
+- 决策留痕：回溯补记 D-004 至 D-007，并将原 D-008 并入 D-001（见 `docs/product/decisions.md`）。
 - 流程文档整理：`docs/design/versioning.md` 的发布权责与 AGENTS.md 一致（正式 tag 由 Agent 执行，人负责验收）；清理已完成的待办项。
 - 新增 `docs/product/`：产品输入的目录结构、需求模板与开发流程关系（由人维护）。
 - 仓库设置：开启「合并后自动删除源分支」（`delete_branch_on_merge`），与 AGENTS.md「分支」段一致。
