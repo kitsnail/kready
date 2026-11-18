@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## [0.2.0](https://github.com/kitsnail/kready/compare/v0.1.0...v0.2.0) (2026-11-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **output:** summary 改名为 rules（按规则计数，每条规则计一次，取最严重状态）， 按结果计数改名为 results_by_status。schema_version 由 2 递增为 3。
+* **output:** 结论新增取值“未能确认”，退出码 1 的含义扩展为异常或未能确认； JSON schema_version 由 1 递增为 2。
+
+### Features
+
+* **check:** 按 kubelet 版本选包，支持 --format json；修复漏判 ([a04833a](https://github.com/kitsnail/kready/commit/a04833a76006b8e6b01be6dea2f4dfe1080c3ee2))
+* **check:** 结论三态与 ERROR 来源区分 ([23c7848](https://github.com/kitsnail/kready/commit/23c7848dbec9945c48db2bb14f60a438831c7354))
+* **cli:** 增加 check --live 实时采集入口 ([193eb85](https://github.com/kitsnail/kready/commit/193eb85f40c4331cd87097c793cb1d8e07af14ae))
+* **cli:** 文本报告输出当前节点数，不做节点数判定 ([72b3340](https://github.com/kitsnail/kready/commit/72b33402a79afc19f0dec269d721894f2c998b47))
+* **collect:** 增加只读采集层（白名单、kubectl 节点清单、SSH 执行） ([af067af](https://github.com/kitsnail/kready/commit/af067af194564d6e0d569510734e61b7372e52fa))
+* **home:** 统一本地目录 KREADY_HOME，默认写入报告与快照 ([c9c6d3a](https://github.com/kitsnail/kready/commit/c9c6d3a38cb25625f8e86cf60be5b37e71cc7f55))
+* **output:** JSON 计数拆为 rules 与 results_by_status，schema_version 递增为 3 ([caf633e](https://github.com/kitsnail/kready/commit/caf633e2f8433e40e76fc8560e92f7cfc4a4ed6a))
+* **output:** 工具未覆盖同一原因合并为一行 ([2a1b5f7](https://github.com/kitsnail/kready/commit/2a1b5f7a1a88fa29ed0fc1c3336dec60a03151d5))
+* **output:** 文本报告以中文标题开头，ID 放括号中 ([46e780d](https://github.com/kitsnail/kready/commit/46e780d9c42d135d59a32124f75c6c019834f685))
+* **output:** 文本报告按规则分组，同一标题只出现一次 ([fb40993](https://github.com/kitsnail/kready/commit/fb4099330866e28e4043843b9d43299a3f1c2422))
+* **output:** 输出契约 schema_version 递增为 2 ([4cf79e4](https://github.com/kitsnail/kready/commit/4cf79e4ab7a35a55dfe919e784f57852a4be274c))
+* **output:** 输出框架分为必须处理/未能检查/参考信息 ([4316997](https://github.com/kitsnail/kready/commit/4316997801fd9dd97fa58c1ea4a3b84a65855cfe))
+* **release:** 新增版本计算脚本 next-version.sh ([d0d2de9](https://github.com/kitsnail/kready/commit/d0d2de983b8fc1ee5297629da9f57cea4859a218))
+* **rules:** 2.32 检查切片：规则包、快照判定与 kready check --snapshot ([3de198c](https://github.com/kitsnail/kready/commit/3de198c5f07d2813738bcc0e2d7e48d894ff9164))
+* **rules:** NODE-05 改为信息项，信息项缺值报 ERROR ([37345ea](https://github.com/kitsnail/kready/commit/37345ea7c15179fd9e05cb5ed7ed5f82c6911920))
+* **rules:** 以控制面 kubelet 版本为基线，VER-01 检查工作节点一致性 ([f12c241](https://github.com/kitsnail/kready/commit/f12c241a37d214cfd4208591976a5e4de6a6b342))
+
+
+### Bug Fixes
+
+* **check:** 工作节点 kubelet 版本为空时 VER-01 报 ERROR ([9237273](https://github.com/kitsnail/kready/commit/923727338727e4f0e362a3aa9efd837ce8abce74))
+* **collect:** SSH 认证改为 agent 优先、默认私钥兜底 ([5256895](https://github.com/kitsnail/kready/commit/525689548b95d670f42567e6a28d81597f940166))
+* **collect:** sshd -T 只提取 passwordauthentication 单行 ([8480d1a](https://github.com/kitsnail/kready/commit/8480d1a2871a8d68cbcbdc552ac7a27389c3fad7))
+* **output:** 相同取值的节点合并为一行 ([149b104](https://github.com/kitsnail/kready/commit/149b104895723b3579be3aa69691bf79689d8283))
+* **snapshot:** 规范化节点 kubelet 版本首尾空白；补充基线场景测试 ([a59b064](https://github.com/kitsnail/kready/commit/a59b06422de239f6798ed420793af21dd82cdac0))
+
 ## [Unreleased]
 
 ### Changed
