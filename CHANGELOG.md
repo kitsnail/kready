@@ -15,6 +15,11 @@
 - ADR 0001：节点级检查通过 SSH 只读采集（root 账号，节点清单由 kubectl 获取），见 `docs/decisions/0001-node-collection-via-ssh.md`。
 - 设计草案 v1：规则 schema（`docs/design/rule-schema.md`）、输出契约（`docs/design/output-contract.md`）、快照格式（`docs/design/snapshot-format.md`）。规则不读取部署源文件，无法判定的项输出 INFO。
 
+### Changed
+- 规则包选择与 VER-01 语义（B 类，已确认）：选包以控制面节点 kubelet 版本为基线；VER-01 改为检查工作节点版本与基线一致（新检查方式 `equal_baseline`）。`rules_rev` 由 1 升至 2。
+- 工作节点版本不一致：原为退出码 2（无适用规则），现为退出码 1（VER-01 FAIL），并列出不符合的节点。此前 VER-01 的结论不再适用。
+- 控制面版本不一致或无控制面节点：仍为退出码 2。
+
 ### Fixed
 - 节点采集文件缺失时，原实现静默跳过该节点，结论可能误报"正常"。现以 `cluster.nodes` 为准，缺失节点报 ERROR，结论为异常。
 - 信息项（INFO）缺值时，集群级原输出空的当前值。现与节点级一致，报 ERROR。

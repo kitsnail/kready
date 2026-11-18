@@ -12,7 +12,7 @@
 | `mode` | 是 | `judge`：判定 PASS/FAIL；`info`：仅输出当前值 |
 | `scope` | 是 | `cluster` / `node` |
 | `source` | 是 | 依据，仅用于追溯，如 `new-cluster-config-guide.md:§4`。运行时不读取 |
-| `field` | 集群级 `judge` 必填 | 集群级取值方式：`config.<key>` 读取快照 `config` 中的字段；`kubelet_versions` 全部节点 kubelet 版本（去重，逗号连接）；`count_role` 按 `expect.role` 计数节点。节点级不用 `field`，用 `collect` |
+| `field` | 集群级 `check` 为 `equals` / `count` 时必填 | 集群级取值方式：`config.<key>` 读取快照 `config` 中的字段；`count_role` 按 `expect.role` 计数节点。节点级不用 `field`，用 `collect`。`equal_baseline` 不用 `field` |
 | `collect` | 否 | 取数据方式，见下文。缺省表示集群级取值（由 `field` 声明） |
 | `check` | `judge` 时必填 | 判断方式，见下文 |
 | `expect` | `judge` 时必填 | 期望值，格式由 `check` 决定 |
@@ -44,6 +44,7 @@
 | `all_ready` | — | 全部对象 Ready |
 | `no_restarts` | `window` | 窗口内重启次数为 0，单位 `m` |
 | `set` | — | 字段存在且非空 |
+| `equal_baseline` | `baseline: control-plane` | 非控制面节点的 kubelet 版本都等于控制面基线。基线缺失或控制面版本不一致时报 ERROR；不符合的工作节点逐个列出，判 FAIL |
 
 只增不改语义。新增判断方式需要 B 类确认。
 
