@@ -232,3 +232,57 @@ func TestVER01FailNamesNonconformingWorker(t *testing.T) {
 		t.Errorf("符合基线的 w-2 不应被列出，实际: %s", out)
 	}
 }
+
+// 仅有控制面节点：VER-01 通过（无工作节点可比较），退出码 0。
+func TestNoWorkerNodesPassesVER01(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	path := filepath.Join(dir, "cluster.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("读取 cluster.json: %v", err)
+	}
+	var c map[string]any
+	if err := json.Unmarshal(data, &c); err != nil {
+		t.Fatalf("解析 cluster.json: %v", err)
+	}
+	var cp []any
+	for _, raw := range c["nodes"].([]any) {
+		n := raw.(map[string]any)
+		if labels, _ := n["labels"].(map[string]any); len(labels) > 0 {
+			cp = append(cp, raw)
+		}
+	}
+	c["nodes"] = cp
+	out, err := json.Marshal(c)
+	if err != nil {
+		t.Fatalf("编码 cluster.json: %v", err)
+	}
+	if err := os.WriteFile(path, out, 0o644); err != nil {
+		t.Fatalf("写入 cluster.json: %v", err)
+	}
+	code, out2, _ := runArgs(t, "check", "--snapshot", dir, "--format", "json")
+	if code != exitOK {
+		t.Fatalf("退出码 = %d，期望 %d；输出: %s", code, exitOK, out2)
+	}
+	if !strings.Contains(out2, "无工作节点") {
+		t.Errorf("JSON 应标明无工作节点，实际: %s", out2)
+	}
+}
+
+// 工作节点版本带空白但与基线一致：不得误判为混布。
+func TestPaddedWorkerVersionMatchesBaseline(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	editCluster(t, dir, func(nodes []map[string]any) {
+		for _, n := range nodes {
+			if n["name"] == "w-1" {
+				n["kubelet"] = " v1.36.4 "
+			}
+		}
+	})
+	code, _, _ := runArgs(t, "check", "--snapshot", dir)
+	if code != exitOK {
+		t.Fatalf("退出码 = %d，期望 %d（空白不应导致 FAIL）", code, exitOK)
+	}
+}

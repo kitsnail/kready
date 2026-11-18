@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Cluster 是 cluster.json 的内容。
@@ -44,6 +45,10 @@ func Load(dir string) (*Snapshot, error) {
 	var s Snapshot
 	if err := readJSON(filepath.Join(dir, "cluster.json"), &s.Cluster); err != nil {
 		return nil, err
+	}
+	// 规范化：去除版本号首尾空白，避免同一版本因空白被误判为混布。
+	for i := range s.Cluster.Nodes {
+		s.Cluster.Nodes[i].Kubelet = strings.TrimSpace(s.Cluster.Nodes[i].Kubelet)
 	}
 	s.Nodes = map[string]map[string]string{}
 	entries, err := os.ReadDir(filepath.Join(dir, "nodes"))
