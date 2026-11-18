@@ -57,6 +57,7 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 
 - 工具：release-please（清单模式），配置见 `release-please-config.json`，当前版本见 `.release-please-manifest.json`。
 - 流程：推送到 `main` 后，工作流创建或更新 Release PR。合并 Release PR 后，由人确认并打正式 tag。
+- 凭据：工作流使用内置 `GITHUB_TOKEN`，依赖组织设置 `can_approve_pull_request_reviews` 为 `true`（Actions 才可建 PR）。**若该开关被关闭，Release PR 将无法创建**，届时需改用 PAT 或 GitHub App token。不使用长期 PAT，避免凭据过期导致工作流静默失败。
 - 0.x 规则：`bump-minor-pre-major` 为真，即破坏性变更升 MINOR，`feat`、`fix` 升 PATCH。**这是项目选择，不是 SemVer 或社区的强制规定**；SemVer 只规定 0.x 阶段"可以随时变化"。
 - 1.0 之后：破坏性变更升 MAJOR，`feat` 升 MINOR，`fix` 升 PATCH。
 - 首个版本：`v0.1.0`，由清单文件设定。
