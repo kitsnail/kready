@@ -144,7 +144,6 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	return exitOK
 }
 
-// writeReport 输出人类可读结论：第一行为结论，异常时列出 FAIL 与 ERROR，最后列出 INFO。
 // label 返回结果的显示名：有标题时为"标题（ID）"，否则只显示 ID。
 // 标题在前便于直接阅读，ID 保留以便对照规则包与文档。
 func label(r check.Result) string {
@@ -154,14 +153,15 @@ func label(r check.Result) string {
 	return r.Title + "（" + r.ID + "）"
 }
 
+// writeReport 输出人类可读结论：第一行为结论，异常时列出 FAIL 与 ERROR，最后列出 INFO。
 func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	fmt.Fprintln(w, check.Conclusion(results))
 	// 如实反映 kubectl 发现的节点数，不与期望值比较（节点数不作为判定项）。
 	fmt.Fprintf(w, "节点数: %d\n", nodeCount)
-	writeGroups(w, results, check.Fail, "【必须处理】")
+	writeGroupsOf(w, results, check.Fail, "【必须处理】")
 	writeBySource(w, results, check.SourceCollect, "【未能确认】", "以下项采集失败，无法确认集群状态。请检查节点连通性与凭据后重新运行。")
 	writeBySource(w, results, check.SourceToolGap, "【工具未覆盖】", "以下内容是工具的能力边界，不代表集群有问题。需用离线快照补充。")
-	writeGroups(w, results, check.Info, "【参考信息】")
+	writeGroupsOf(w, results, check.Info, "【参考信息】")
 }
 
 // writeBySource 输出某一来源的 ERROR，并附一行说明归属与处理方式，明确边界。
@@ -190,22 +190,8 @@ func writeBySource(w io.Writer, results []check.Result, source check.Source, sec
 	}
 }
 
-// writeGroups 按规则分组输出同一状态的结果：每条规则一个标题，下面逐行列出各目标。
+// writeGroupsOf 按规则分组输出同一状态的结果：每条规则一个标题，下面逐行列出各目标。
 // 同一规则只出现一次标题，避免按节点重复。
-func writeGroups(w io.Writer, results []check.Result, status check.Status, section string) {
-	var subset []check.Result
-	for _, r := range results {
-		if r.Status == status {
-			subset = append(subset, r)
-		}
-	}
-	if len(subset) == 0 {
-		return
-	}
-	writeGroupsOf(w, subset, status, section)
-}
-
-// writeGroupsOf 按规则分组输出结果，同一规则只出现一次标题。
 func writeGroupsOf(w io.Writer, results []check.Result, status check.Status, section string) {
 	var order []string
 	groups := map[string][]check.Result{}
