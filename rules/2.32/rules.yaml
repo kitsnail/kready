@@ -3,6 +3,10 @@
 # 变更属 B 类，需人工确认。
 pack: "2.32"
 rules_rev: 1
+# 适用的 kubelet 版本（精确匹配）。观测版本不在此列 → 无适用规则。
+applies_to:
+  kubelet:
+    - "v1.36.4"
 rules:
   - id: VER-01
     title: 所有节点 kubelet 版本

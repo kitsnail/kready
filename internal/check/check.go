@@ -17,8 +17,10 @@ type Status string
 const (
 	Pass  Status = "PASS"
 	Fail  Status = "FAIL"
+	Warn  Status = "WARN"
 	Error Status = "ERROR"
 	Info  Status = "INFO"
+	Skip  Status = "SKIP"
 )
 
 // Result 是一条判定结果（一个目标一条）。
@@ -108,8 +110,8 @@ func runNodes(r rules.Rule, s *snapshot.Snapshot) []Result {
 	return out
 }
 
-// kubeletVersions 返回所有节点的 kubelet 版本，全部一致时为该版本，否则逗号连接。
-func kubeletVersions(s *snapshot.Snapshot) string {
+// KubeletVersions 返回所有节点的 kubelet 版本（去重，保持出现顺序）。
+func KubeletVersions(s *snapshot.Snapshot) []string {
 	seen := map[string]bool{}
 	var vals []string
 	for _, n := range s.Cluster.Nodes {
@@ -118,7 +120,12 @@ func kubeletVersions(s *snapshot.Snapshot) string {
 			vals = append(vals, n.Kubelet)
 		}
 	}
-	return strings.Join(vals, ",")
+	return vals
+}
+
+// kubeletVersions 返回去重后的 kubelet 版本，逗号连接，用于 VER-01 的实际值展示。
+func kubeletVersions(s *snapshot.Snapshot) string {
+	return strings.Join(KubeletVersions(s), ",")
 }
 
 func countNodes(s *snapshot.Snapshot, role string) int {
@@ -132,10 +139,16 @@ func countNodes(s *snapshot.Snapshot, role string) int {
 	return c
 }
 
+// sortedNodeNames 以集群声明的节点为准（cluster.nodes），按名排序。
+// 采集文件缺失的节点仍会列出，由 runNodes 报 ERROR，避免漏判后输出"正常"。
 func sortedNodeNames(s *snapshot.Snapshot) []string {
-	names := make([]string, 0, len(s.Nodes))
-	for n := range s.Nodes {
-		names = append(names, n)
+	seen := map[string]bool{}
+	var names []string
+	for _, n := range s.Cluster.Nodes {
+		if !seen[n.Name] {
+			seen[n.Name] = true
+			names = append(names, n.Name)
+		}
 	}
 	sort.Strings(names)
 	return names

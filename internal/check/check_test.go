@@ -113,3 +113,27 @@ func TestInfoMissingValueIsError(t *testing.T) {
 		t.Errorf("节点级信息项缺值应为 ERROR；结果: %v", results)
 	}
 }
+
+// 节点采集文件缺失必须报 ERROR，不得因漏判输出"正常"。
+func TestMissingNodeFileIsError(t *testing.T) {
+	p := loadPack(t)
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "2.32"))
+	if err != nil {
+		t.Fatalf("加载正例快照: %v", err)
+	}
+	delete(s.Nodes, "cp-2")
+
+	results := check.Run(p, s)
+	if got := check.Conclusion(results); got != "异常" {
+		t.Errorf("结论 = %q，期望 异常（cp-2 缺采集数据）", got)
+	}
+	found := false
+	for _, r := range results {
+		if r.ID == "NODE-02" && r.Target == "cp-2" && r.Status == check.Error {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("缺失节点 cp-2 应对 NODE-02 报 ERROR；结果: %v", results)
+	}
+}

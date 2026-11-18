@@ -2,6 +2,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 
 	data "github.com/scclabs/kready/rules"
@@ -10,9 +11,15 @@ import (
 
 // Pack 是一份规则包。
 type Pack struct {
-	Pack     string `yaml:"pack"`
-	RulesRev int    `yaml:"rules_rev"`
-	Rules    []Rule `yaml:"rules"`
+	Pack      string    `yaml:"pack"`
+	RulesRev  int       `yaml:"rules_rev"`
+	AppliesTo AppliesTo `yaml:"applies_to"`
+	Rules     []Rule    `yaml:"rules"`
+}
+
+// AppliesTo 声明规则包适用的组件版本（精确匹配）。
+type AppliesTo struct {
+	Kubelet []string `yaml:"kubelet"`
 }
 
 // Rule 是一条规则，字段见 docs/design/rule-schema.md。
@@ -60,4 +67,38 @@ func (p *Pack) Active() []Rule {
 		}
 	}
 	return out
+}
+
+// Select 按观测到的 kubelet 版本选择规则包。
+// 所有节点版本必须一致且精确匹配某个规则包的 applies_to，否则返回 ErrNoPack。
+func Select(kubeletVersions []string) (*Pack, error) {
+	if len(kubeletVersions) == 0 {
+		return nil, ErrNoPack
+	}
+	version := kubeletVersions[0]
+	for _, v := range kubeletVersions[1:] {
+		if v != version {
+			return nil, ErrNoPack
+		}
+	}
+	for _, pack := range Packs() {
+		p, err := Load(pack)
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range p.AppliesTo.Kubelet {
+			if v == version {
+				return p, nil
+			}
+		}
+	}
+	return nil, ErrNoPack
+}
+
+// ErrNoPack 表示无适用规则。
+var ErrNoPack = errors.New("无适用规则")
+
+// Packs 列出内嵌的规则包标识。当前仅 2.32。
+func Packs() []string {
+	return []string{"2.32"}
 }
