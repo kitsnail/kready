@@ -20,7 +20,7 @@
 - 快照测试：`testdata/positive/2.32`（全部通过）与 `testdata/negative/2.32/<RULE-ID>/`（每条判定规则一个负例）。测试只使用快照。
 - NODE-05（内核自动升级服务状态）：判定方案未定，暂为信息项，仅输出当前值（见 `docs/rules/2.32-draft.md` 待确认 5）。
 - 规则包选择：按快照中节点的 kubelet 版本选包（规则包 `applies_to.kubelet` 精确匹配）。无匹配或节点版本不一致时输出"无适用规则"，退出码 2，不做判定。
-- JSON 输出：`kready check --snapshot <目录> --format json`，结构见 `docs/design/output-contract.md`（`schema_version` 1）。
+- JSON 输出：`kready check --snapshot <目录> --format json`，结构见 `docs/design/output-contract.md`（`schema_version` 2）。
 - 依赖：`gopkg.in/yaml.v3`。理由：规则包使用 YAML 格式，标准库无 YAML 解析器。
 - 项目脚手架：Go 模块（go 1.27.4）、`cmd/kready` 入口、`Makefile`（fmt / lint / test / build / check）、CI 工作流。
 - 版本与发布规范：`docs/design/versioning.md`。
@@ -30,7 +30,7 @@
 
 ### Changed
 - 【工具未覆盖】同一原因的项合并为一行，并列出各项名称。
-- 退出码：`1` 表示结论为异常或未能确认。工具未覆盖不再使退出码为 1。（改变结论含义，`schema_version` 是否递增待确认）
+- 退出码：`1` 表示结论为异常或未能确认。工具未覆盖不再使退出码为 1。**破坏性变更**：JSON `schema_version` 由 1 递增为 2。
 - 去掉“（待补充）”空占位：规则未填写影响与处理时不显示。
 - 规则包选择与 VER-01 语义（B 类，已确认）：选包以控制面节点 kubelet 版本为基线；VER-01 改为检查工作节点版本与基线一致（新检查方式 `equal_baseline`）。`rules_rev` 由 1 升至 2。
 - 工作节点版本不一致：原为退出码 2（无适用规则），现为退出码 1（VER-01 FAIL），并列出不符合的节点。此前 VER-01 的结论不再适用。

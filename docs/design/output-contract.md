@@ -63,7 +63,7 @@ ERROR 结果带 `source` 字段，说明其性质，决定它是否影响结论�
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "kready_version": "0.1.0",
   "pack": "2.32",
   "rules_rev": 2,
@@ -113,4 +113,7 @@ ERROR 结果带 `source` 字段，说明其性质，决定它是否影响结论�
 - 新增可选字段：`schema_version` 不变。JSON 结果新增 `title` 字段（可选），属于此类。
 - 人类可读输出的行格式可以调整，不属于契约字段；脚本应读取 JSON。
 - 删除、重命名字段，或改变状态与退出码含义：递增 `schema_version`，按 MAJOR 处理。
-- 本版本改变了结论取值（新增“未能确认”）与退出码含义。是否递增 `schema_version` 待人工确认，未确认前不擅自变更。
+- 版本 2：结论新增取值“未能确认”，退出码 1 的含义扩展为“异常或未能确认”。按上条规则判为破坏性变更，`schema_version` 由 1 递增为 2。
+- 版本历史：
+  - 1：结论为正常/异常，ERROR 一律计为异常。
+  - 2：结论为正常/异常/未能确认，ERROR 带 `source`（collect / tool-gap），tool-gap 不影响结论与退出码。
