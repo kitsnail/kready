@@ -43,6 +43,9 @@
 
 ## JSON 结构
 
+用 `--format json` 输出。`summary` 六个计数始终存在，未出现的状态为 0。
+
+
 ```json
 {
   "schema_version": 1,
