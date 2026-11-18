@@ -1,0 +1,47 @@
+{
+  "nodes": [
+    {
+      "name": "cp-1",
+      "labels": {
+        "node-role.kubernetes.io/control-plane": ""
+      },
+      "ready": true,
+      "kubelet": "v1.36.4"
+    },
+    {
+      "name": "cp-2",
+      "labels": {
+        "node-role.kubernetes.io/control-plane": ""
+      },
+      "ready": true,
+      "kubelet": "v1.36.4"
+    },
+    {
+      "name": "cp-3",
+      "labels": {
+        "node-role.kubernetes.io/control-plane": ""
+      },
+      "ready": true,
+      "kubelet": "v1.36.4"
+    },
+    {
+      "name": "w-1",
+      "labels": {},
+      "ready": true,
+      "kubelet": "v1.36.4"
+    },
+    {
+      "name": "w-2",
+      "labels": {},
+      "ready": true,
+      "kubelet": "v1.36.4"
+    }
+  ],
+  "pods": [],
+  "config": {
+    "etcd_version": "3.6.13",
+    "kube_proxy_mode": "nftables",
+    "etcd_quota_backend_bytes": "8589934592",
+    "metrics_server_replicas": "3"
+  }
+}

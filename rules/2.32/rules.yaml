@@ -1,0 +1,121 @@
+# kubespray 2.32.x 规则包（切片 v1）。
+# 规则 schema 见 docs/design/rule-schema.md。运行时只读取本文件，不读取部署源文件。
+# 变更属 B 类，需人工确认。
+pack: "2.32"
+rules_rev: 2
+# 适用的 kubelet 版本（精确匹配）。以控制面节点版本为基线；不在此列 → 无适用规则。
+applies_to:
+  kubelet:
+    - "v1.36.4"
+rules:
+  - id: VER-01
+    title: 工作节点 kubelet 版本与控制面一致
+    status: active
+    mode: judge
+    scope: cluster
+    source: 基线为控制面节点 kubelet 版本（选包已保证其精确匹配 applies_to，见 output-contract.md）；工作节点与之比较
+    check: equal_baseline
+    expect:
+      baseline: control-plane
+
+  - id: VER-04
+    title: etcd 版本
+    status: active
+    mode: judge
+    scope: cluster
+    source: kubespray 2.32.0 vars/main/main.yml etcd_supported_versions['1.36']
+    field: config.etcd_version
+    check: equals
+    expect:
+      value: "3.6.14"
+
+  - id: VER-06
+    title: kube-proxy 模式
+    status: active
+    mode: judge
+    scope: cluster
+    source: 参考仓库 inventory k8s-cluster.yml kube_proxy_mode（部署方选择，上游默认 ipvs）
+    field: config.kube_proxy_mode
+    check: equals
+    expect:
+      value: "nftables"
+
+  - id: NODE-02
+    title: inotify max_user_instances
+    status: active
+    mode: judge
+    scope: node
+    source: 参考仓库 k8s/os/80-inotify.conf
+    collect:
+      command: sysctl-inotify-instances
+      as_root: false
+    check: equals
+    expect:
+      value: "1280"
+
+  - id: NODE-03
+    title: inotify max_user_watches
+    status: active
+    mode: judge
+    scope: node
+    source: 参考仓库 k8s/os/80-inotify.conf
+    collect:
+      command: sysctl-inotify-watches
+      as_root: false
+    check: equals
+    expect:
+      value: "655360"
+
+  - id: NODE-04
+    title: sshd 禁用密码登录
+    status: active
+    mode: judge
+    scope: node
+    source: 参考仓库 k8s/os/50-cloud-init.conf
+    collect:
+      command: sshd-password-auth
+      as_root: true
+    check: equals
+    expect:
+      value: "PasswordAuthentication no"
+
+  - id: NODE-05
+    title: 内核自动升级服务当前状态
+    status: active
+    mode: info
+    scope: node
+    source: 参考仓库 k8s/os/noupgrade.sh、nolinuxupgrades；判定方案未定（见 docs/rules/2.32-draft.md 待确认 5），暂仅输出当前值
+    collect:
+      command: unattended-upgrades-active
+      as_root: true
+
+  - id: CP-01
+    title: 控制面节点数
+    status: active
+    mode: judge
+    scope: cluster
+    source: kubespray README（HA 至少 3 个且为奇数）
+    field: count_role
+    check: count
+    expect:
+      value: "3"
+      role: control-plane
+
+  - id: CP-08
+    title: etcd 后端配额
+    status: active
+    mode: judge
+    scope: cluster
+    source: 参考仓库 inventory etcd.yml etcd_quota_backend_bytes（8 GiB）
+    field: config.etcd_quota_backend_bytes
+    check: equals
+    expect:
+      value: "8589934592"
+
+  - id: SYS-04
+    title: metrics-server 副本数
+    status: active
+    mode: info
+    scope: cluster
+    source: 参考仓库 README 样例值 3，仅追溯，不判定
+    field: config.metrics_server_replicas
