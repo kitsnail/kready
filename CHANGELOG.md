@@ -4,7 +4,8 @@
 
 ### Changed
 - 流程文档整理：`docs/design/versioning.md` 的发布权责改为与 AGENTS.md 一致（正式 tag 由 Agent 执行，人负责验收）；清理已完成的待办项。
-- 新增 `docs/product/README.md`：产品输入的目录结构、需求模板与与开发流程的关系（由人维护）。
+- 新增 `docs/product/README.md`：产品输入的目录结构、需求模板与开发流程的关系（由人维护）。
+- 迁移至 `kitsnail/kready`。文档整理提交 `2c67781` 未经 PR 直接落入 `main`，违反 AGENTS.md 禁止事项 6；经人工确认保留，内容已通过 `make check`。本条为事后记录。
 - release-please 改用内置 `GITHUB_TOKEN`，移除长期 PAT（原 `RELEASE_PLEASE_TOKEN` 已过期，导致工作流 `Bad credentials` 静默失败）。配套打开组织设置 `can_approve_pull_request_reviews`，Actions 因而可创建 PR。`docs/design/versioning.md` 补充凭据要求。
 - 分支生命周期：功能分支合并后即删除，仓库开启「合并后自动删除源分支」；清理已合并分支 5 个。规则见 `AGENTS.md` 的「分支」段。
 - 项目 logo：`docs/assets/logo.svg`。实心蓝六边形配白色对勾与右上角绿色状态点，六边形环留缺口容纳状态点。无文字，缩放后仍可辨认。
