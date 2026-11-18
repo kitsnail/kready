@@ -27,33 +27,63 @@ type Runner interface {
 	Run(ctx context.Context, ip, commandID string) (string, error)
 }
 
-// SSHRunner 通过 ssh-agent 与 known_hosts 登录节点并执行白名单命令。
-// 不关闭主机密钥校验；不读取私钥内容。
+// SSHRunner 通过 SSH 密钥认证与 known_hosts 登录节点并执行白名单命令。
+// 认证顺序：ssh-agent（若 SSH_AUTH_SOCK 可用）→ 默认私钥文件。不关闭主机密钥校验。
+// 私钥仅用于签名，内容不打印、不写入报告或日志。
 type SSHRunner struct {
 	client   map[string]*ssh.Client
 	hostKeys ssh.HostKeyCallback
-	agent    agent.ExtendedAgent
+	auth     []ssh.AuthMethod
 }
 
-// NewSSHRunner 初始化 known_hosts 校验与 ssh-agent。两者缺失时直接报错，不降级为不校验。
+// NewSSHRunner 初始化 known_hosts 校验与认证方式。known_hosts 缺失时直接报错，不降级为不校验。
+// 认证方式至少要有一种（agent 或默认私钥），否则报错。
 func NewSSHRunner() (*SSHRunner, error) {
 	hk, err := knownHostsCallback()
 	if err != nil {
 		return nil, err
 	}
-	sock := os.Getenv("SSH_AUTH_SOCK")
-	if sock == "" {
-		return nil, fmt.Errorf("未找到 ssh-agent（SSH_AUTH_SOCK 未设置），请先加载密钥")
-	}
-	conn, err := net.Dial("unix", sock)
-	if err != nil {
-		return nil, fmt.Errorf("连接 ssh-agent 失败: %w", err)
+	auth := authMethods()
+	if len(auth) == 0 {
+		return nil, fmt.Errorf("未找到可用的 SSH 密钥：请启动 ssh-agent 或在 ~/.ssh 中放置默认私钥")
 	}
 	return &SSHRunner{
 		client:   map[string]*ssh.Client{},
 		hostKeys: hk,
-		agent:    agent.NewClient(conn),
+		auth:     auth,
 	}, nil
+}
+
+// defaultKeyFiles 是按顺序尝试的默认私钥文件名（相对 ~/.ssh）。
+var defaultKeyFiles = []string{"id_ed25519", "id_ecdsa", "id_rsa"}
+
+// authMethods 返回可用的认证方式：先 agent，再默认私钥。无法加载的项直接跳过。
+func authMethods() []ssh.AuthMethod {
+	var methods []ssh.AuthMethod
+	if sock := os.Getenv("SSH_AUTH_SOCK"); sock != "" {
+		if conn, err := net.Dial("unix", sock); err == nil {
+			methods = append(methods, ssh.PublicKeysCallback(agent.NewClient(conn).Signers))
+		}
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		var signers []ssh.Signer
+		for _, name := range defaultKeyFiles {
+			data, err := os.ReadFile(filepath.Join(home, ".ssh", name))
+			if err != nil {
+				continue
+			}
+			signer, err := ssh.ParsePrivateKey(data)
+			if err != nil {
+				// 有口令或格式不支持的私钥跳过，不输出其内容。
+				continue
+			}
+			signers = append(signers, signer)
+		}
+		if len(signers) > 0 {
+			methods = append(methods, ssh.PublicKeys(signers...))
+		}
+	}
+	return methods
 }
 
 func knownHostsCallback() (ssh.HostKeyCallback, error) {
@@ -76,7 +106,7 @@ func (r *SSHRunner) connect(ip string) (*ssh.Client, error) {
 	}
 	cfg := &ssh.ClientConfig{
 		User:            SSHUser,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeysCallback(r.agent.Signers)},
+		Auth:            r.auth,
 		HostKeyCallback: r.hostKeys,
 		Timeout:         DialTimeout,
 	}
