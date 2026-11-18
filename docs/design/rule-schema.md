@@ -44,7 +44,7 @@
 | `all_ready` | — | 全部对象 Ready |
 | `no_restarts` | `window` | 窗口内重启次数为 0，单位 `m` |
 | `set` | — | 字段存在且非空 |
-| `equal_baseline` | `baseline: control-plane` | 非控制面节点的 kubelet 版本都等于控制面基线。基线缺失或控制面版本不一致时报 ERROR；不符合的工作节点逐个列出，判 FAIL |
+| `equal_baseline` | `baseline: control-plane` | 非控制面节点的 kubelet 版本都等于控制面基线。基线缺失或控制面版本不一致、或工作节点版本为空时报 ERROR；版本不符的工作节点逐个列出，判 FAIL |
 
 只增不改语义。新增判断方式需要 B 类确认。
 
