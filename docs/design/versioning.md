@@ -53,13 +53,13 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 | `feat` | PATCH | MINOR |
 | `BREAKING CHANGE` | MINOR | MAJOR |
 
-Agent 不手算版本，只调用脚本：`scripts/next-version.sh`（只读，不打 tag）。
+版本由 release-please 计算，不手写，不自定义脚本。
 
-- 没有任何 tag：输出 `v0.1.0`。
-- 0.x 阶段：破坏性变更 → MINOR；`feat`、`fix` → PATCH；其它类型不升版本。
-- 1.0 之后：破坏性变更 → MAJOR；`feat` → MINOR；`fix` → PATCH。
-- 破坏性变更识别两种写法：类型后带 `!`（如 `feat(output)!:`），或提交正文含 `BREAKING CHANGE:`。
-- `--json` 输出机器可读结果。
+- 工具：release-please（清单模式），配置见 `release-please-config.json`，当前版本见 `.release-please-manifest.json`。
+- 流程：推送到 `main` 后，工作流创建或更新 Release PR。合并 Release PR 后，由人确认并打正式 tag。
+- 0.x 规则：`bump-minor-pre-major` 为真，即破坏性变更升 MINOR，`feat`、`fix` 升 PATCH。**这是项目选择，不是 SemVer 或社区的强制规定**；SemVer 只规定 0.x 阶段"可以随时变化"。
+- 1.0 之后：破坏性变更升 MAJOR，`feat` 升 MINOR，`fix` 升 PATCH。
+- 首个版本：`v0.1.0`，由清单文件设定。
 
 ## 七、分支与发布
 

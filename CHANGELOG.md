@@ -2,8 +2,9 @@
 
 ## [Unreleased]
 
-### Added
-- `scripts/next-version.sh`：按 `docs/design/versioning.md` 计算下一版本号。只读，不打 tag。首个版本为 `v0.1.0`。
+### Changed
+- 版本计算改用 release-please（社区标准工具），替代自定义的 `scripts/next-version.sh`，该脚本已删除。
+- 新增 `release-please` 工作流：只创建 Release PR，正式 tag 由人执行。
 - 结论三态：`正常`、`异常`、`未能确认`。结论只描述集群。`未能确认` 表示采集失败，无法确认集群状态，不得写成正常。
 - ERROR 结果增加 `source` 字段：`collect`（采集失败，影响结论）与 `tool-gap`（工具未覆盖，不影响结论）。
 - 文本报告独立成块：【未能确认】（附处理方式）与【工具未覆盖】（注明“不代表集群有问题”）。
