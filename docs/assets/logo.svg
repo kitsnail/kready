@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 外部蓝色六边形底色 -->
+  <polygon points="128,16 226,72 226,184 128,240 30,184 30,72" fill="#326CE5" />
+  
+  <!-- 内部白色描边六边形（右上角留出缺口以容纳状态圆点） -->
+  <polyline points="182,74 128,43 52,86 52,170 128,213 204,170 204,116" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="butt" stroke-linejoin="miter" />
+  
+  <!-- 右上角绿色状态圆点 (Ready Status) -->
+  <circle cx="198" cy="92" r="11" fill="#22C55E" />
+  
+  <!-- 居中白色粗体对勾 -->
+  <polyline points="92,130 118,156 168,106" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter" />
+</svg>

@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="docs/assets/logo.svg" alt="kready" width="96">
+</div>
+
 # kready
 
 面向一线运维的 Kubernetes 集群交付就绪检查工具。一条命令，输出**正常**或**异常**；异常时列出实际值与期望值。
