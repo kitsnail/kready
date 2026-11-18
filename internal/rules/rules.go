@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	data "github.com/scclabs/kready/rules"
+	data "github.com/kitsnail/kready/rules"
 	"gopkg.in/yaml.v3"
 )
 

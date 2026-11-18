@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // controlPlaneLabel 与快照判定使用的标签一致，用于标记控制面节点。

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // kubelet 版本首尾空白应被去除，同一版本不因空白被视为不同版本。

@@ -3,7 +3,7 @@ package collect
 import (
 	"context"
 
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // Live 通过 kubectl 与 SSH 采集，组装成与离线快照相同结构的 Snapshot。

@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/scclabs/kready/internal/check"
-	"github.com/scclabs/kready/internal/rules"
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/check"
+	"github.com/kitsnail/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // testdata 位于仓库根，测试在 internal/check 下运行，需回到根目录。
