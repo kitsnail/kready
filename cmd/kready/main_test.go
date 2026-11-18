@@ -54,22 +54,24 @@ func TestCheckPositiveJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &d); err != nil {
 		t.Fatalf("JSON 解析失败: %v\n%s", err, out)
 	}
-	for _, k := range []string{"schema_version", "kready_version", "pack", "rules_rev", "conclusion", "summary", "results"} {
+	for _, k := range []string{"schema_version", "kready_version", "pack", "rules_rev", "conclusion", "rules", "results_by_status", "results"} {
 		if _, ok := d[k]; !ok {
 			t.Errorf("缺少字段 %s", k)
 		}
 	}
-	// 锁定输出契约版本：改动结论或退出码语义时必须同步递增并更新此断言。
-	if d["schema_version"] != float64(2) {
-		t.Errorf("schema_version = %v，期望 2", d["schema_version"])
+	// 锁定输出契约版本：改动结论、退出码或字段语义时必须同步递增并更新此断言。
+	if d["schema_version"] != float64(3) {
+		t.Errorf("schema_version = %v，期望 3", d["schema_version"])
 	}
 	if d["pack"] != "2.32" || d["conclusion"] != "正常" {
 		t.Errorf("pack/conclusion 不符: %v / %v", d["pack"], d["conclusion"])
 	}
-	summary, _ := d["summary"].(map[string]any)
-	for _, k := range []string{"pass", "fail", "warn", "error", "info", "skip"} {
-		if _, ok := summary[k]; !ok {
-			t.Errorf("summary 缺少 %s", k)
+	for _, field := range []string{"rules", "results_by_status"} {
+		m, _ := d[field].(map[string]any)
+		for _, k := range []string{"pass", "fail", "warn", "error", "info", "skip"} {
+			if _, ok := m[k]; !ok {
+				t.Errorf("%s 缺少 %s", field, k)
+			}
 		}
 	}
 }

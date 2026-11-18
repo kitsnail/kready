@@ -165,10 +165,52 @@ func sortedNodeNames(s *snapshot.Snapshot) []string {
 }
 
 // Summary 统计各状态数量。
+// Summary 按结果条数计数（一个节点一条即一条结果）。
 func Summary(rs []Result) map[Status]int {
 	m := map[Status]int{}
 	for _, r := range rs {
 		m[r.Status]++
+	}
+	return m
+}
+
+// ruleSeverity 给每条结果排序严重程度，数值越大越严重。
+// 与结论一致：FAIL 最严重；采集失败次之；工具未覆盖、信息、通过依次降低。
+func ruleSeverity(r Result) int {
+	switch {
+	case r.Status == Fail:
+		return 5
+	case r.Status == Error && r.Source == SourceCollect:
+		return 4
+	case r.Status == Error:
+		return 3
+	case r.Status == Warn:
+		return 2
+	case r.Status == Info:
+		return 1
+	}
+	return 0
+}
+
+// RuleStatus 按规则计数：同一规则的多条结果取最严重的状态，每条规则计一次。
+// 用于决策：工程师看到的是“几件事需要处理”，而不是节点级的条数。
+func RuleStatus(rs []Result) map[Status]int {
+	worst := map[string]Result{}
+	var order []string
+	for _, r := range rs {
+		cur, ok := worst[r.ID]
+		if !ok {
+			order = append(order, r.ID)
+			worst[r.ID] = r
+			continue
+		}
+		if ruleSeverity(r) > ruleSeverity(cur) {
+			worst[r.ID] = r
+		}
+	}
+	m := map[Status]int{}
+	for _, id := range order {
+		m[worst[id].Status]++
 	}
 	return m
 }

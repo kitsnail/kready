@@ -38,3 +38,28 @@ func TestBlockingFollowsConclusion(t *testing.T) {
 		t.Error("采集失败应阻断（未能确认）")
 	}
 }
+
+// 按规则计数：同一规则的多个节点结果只计一次，取最严重状态。
+func TestRuleStatusCountsEachRuleOnce(t *testing.T) {
+	rs := []Result{
+		{ID: "NODE-02", Status: Fail, Target: "a"},
+		{ID: "NODE-02", Status: Fail, Target: "b"},
+		{ID: "NODE-02", Status: Pass, Target: "c"},
+		{ID: "NODE-03", Status: Pass, Target: "a"},
+		{ID: "NODE-03", Status: Info, Target: "b"},
+		{ID: "CP-08", Status: Error, Source: SourceToolGap, Target: "cluster"},
+		{ID: "VER-04", Status: Error, Source: SourceCollect, Target: "a"},
+		{ID: "VER-04", Status: Error, Source: SourceToolGap, Target: "b"},
+	}
+	got := RuleStatus(rs)
+	want := map[Status]int{Fail: 1, Pass: 0, Info: 1, Error: 2}
+	for st, n := range want {
+		if got[st] != n {
+			t.Errorf("%s = %d，期望 %d（完整: %v）", st, got[st], n, got)
+		}
+	}
+	// NODE-02 有 FAIL，不能被同规则的 PASS 冲掉；VER-04 的 collect 优先于 tool-gap。
+	if got[Fail] != 1 {
+		t.Errorf("同规则 FAIL 应保留，实际: %v", got)
+	}
+}
