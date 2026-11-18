@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- release-please 改用内置 `GITHUB_TOKEN`，移除长期 PAT（原 `RELEASE_PLEASE_TOKEN` 已过期，导致工作流 `Bad credentials` 静默失败）。配套打开组织设置 `can_approve_pull_request_reviews`，Actions 因而可创建 PR。`docs/design/versioning.md` 补充凭据要求。
 - 分支生命周期：功能分支合并后即删除，仓库开启「合并后自动删除源分支」；清理已合并分支 5 个。规则见 `AGENTS.md` 的「分支」段。
 - 项目 logo：`docs/assets/logo.svg`。实心蓝六边形配白色对勾与右上角绿色状态点，六边形环留缺口容纳状态点。无文字，缩放后仍可辨认。
 - README 顶部居中显示 logo。

@@ -2,6 +2,8 @@ name: release-please
 
 # 只创建或更新 Release PR，不自动打 tag、不发布。
 # 合并 Release PR 后，正式 tag 由人确认并执行（见 docs/design/versioning.md）。
+# 使用内置 GITHUB_TOKEN：组织已开启 can_approve_pull_request_reviews，
+# Actions 可创建 PR，无需长期 PAT（避免凭据过期导致工作流静默失效）。
 on:
   push:
     branches:
@@ -19,4 +21,4 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
