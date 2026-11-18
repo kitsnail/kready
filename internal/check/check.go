@@ -23,11 +23,24 @@ const (
 	Skip  Status = "SKIP"
 )
 
+// Source 说明 ERROR 的性质，决定它是否影响结论。
+//   - SourceCluster：集群本身的结果（PASS/FAIL/INFO），不适用于 ERROR。
+//   - SourceToolGap：工具在当前模式下没有数据来源（如实时模式不采集 config.*），不是集群问题，不影响结论。
+//   - SourceCollect：工具尝试采集或判定时失败（如 SSH 失败、节点数据缺失），无法确认集群状态，影响结论为"未能确认"。
+type Source string
+
+const (
+	SourceCluster Source = "cluster"
+	SourceToolGap Source = "tool-gap"
+	SourceCollect Source = "collect"
+)
+
 // Result 是一条判定结果（一个目标一条）。
 type Result struct {
 	ID     string `json:"id"`
 	Title  string `json:"title,omitempty"`
 	Status Status `json:"status"`
+	Source Source `json:"source,omitempty"`
 	Target string `json:"target"`
 	Actual string `json:"actual"`
 	Expect string `json:"expect,omitempty"`
@@ -72,7 +85,7 @@ func runCluster(r rules.Rule, s *snapshot.Snapshot) Result {
 	res := Result{ID: r.ID, Target: "cluster", Actual: actual, Expect: expect}
 	// 缺值一律 ERROR，信息项也不例外，避免输出空的"当前值="造成误判。
 	if actual == "" {
-		res.Status, res.Error = Error, "快照中缺少该字段"
+		res.Status, res.Error, res.Source = Error, "本模式不采集", SourceToolGap
 		return res
 	}
 	switch {
@@ -107,7 +120,7 @@ func runNodes(r rules.Rule, s *snapshot.Snapshot) []Result {
 		res := Result{ID: r.ID, Target: n, Expect: r.Expect["value"]}
 		val, ok := s.Nodes[n][r.Collect.Command]
 		if !ok {
-			res.Status, res.Error = Error, "采集失败或命令未注册: "+r.Collect.Command
+			res.Status, res.Error, res.Source = Error, "采集失败: "+r.Collect.Command, SourceCollect
 			out = append(out, res)
 			continue
 		}
@@ -160,14 +173,32 @@ func Summary(rs []Result) map[Status]int {
 	return m
 }
 
-// Conclusion 按输出契约给出结论：无 FAIL 与 ERROR 为正常，否则异常。
+// Conclusion 只描述集群，结论三种：
+//   - 异常：存在 FAIL（确认不合规）。
+//   - 未能确认：无 FAIL，但存在采集失败（SourceCollect 的 ERROR），无法确认集群状态。
+//   - 正常：无 FAIL，且全部判定项已采集。
+//
+// 工具未覆盖（SourceToolGap）不影响结论。
 func Conclusion(rs []Result) string {
+	hasCollect := false
 	for _, r := range rs {
-		if r.Status == Fail || r.Status == Error {
+		if r.Status == Fail {
 			return "异常"
 		}
+		if r.Status == Error && r.Source == SourceCollect {
+			hasCollect = true
+		}
+	}
+	if hasCollect {
+		return "未能确认"
 	}
 	return "正常"
+}
+
+// Blocking 报告结论是否使退出码为非 0：异常与未能确认都视为未通过。
+func Blocking(rs []Result) bool {
+	c := Conclusion(rs)
+	return c != "正常"
 }
 
 // String 便于调试输出。
@@ -213,12 +244,12 @@ func distinctKubelet(s *snapshot.Snapshot, controlPlane bool) []string {
 func runBaseline(r rules.Rule, s *snapshot.Snapshot) Result {
 	res := Result{ID: r.ID, Target: "cluster"}
 	if r.Expect["baseline"] != "control-plane" {
-		res.Status, res.Error = Error, "不支持的基线: "+r.Expect["baseline"]
+		res.Status, res.Error, res.Source = Error, "规则配置错误，不支持的基线: "+r.Expect["baseline"], SourceToolGap
 		return res
 	}
 	cp := ControlPlaneKubelet(s)
 	if len(cp) != 1 {
-		res.Status, res.Error = Error, "控制面节点版本缺失或不一致，无法确定基线"
+		res.Status, res.Error, res.Source = Error, "控制面节点版本缺失或不一致，无法确定基线", SourceCollect
 		return res
 	}
 	res.Expect = cp[0]
@@ -236,7 +267,7 @@ func runBaseline(r rules.Rule, s *snapshot.Snapshot) Result {
 	}
 	if len(missing) > 0 {
 		sort.Strings(missing)
-		res.Status, res.Error = Error, "工作节点缺少 kubelet 版本: "+strings.Join(missing, ",")
+		res.Status, res.Error, res.Source = Error, "工作节点缺少 kubelet 版本: "+strings.Join(missing, ","), SourceCollect
 		return res
 	}
 	// 列出与基线不符的工作节点，便于直接定位。

@@ -137,10 +137,9 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "报告已保存: %s\n", path)
 	}
 
-	for _, r := range results {
-		if r.Status == check.Fail || r.Status == check.Error {
-			return exitBad
-		}
+	// 退出码只表达是否通过：异常或未能确认都返回 1，工具未覆盖不影响。
+	if check.Blocking(results) {
+		return exitBad
 	}
 	return exitOK
 }
@@ -160,13 +159,43 @@ func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	// 如实反映 kubectl 发现的节点数，不与期望值比较（节点数不作为判定项）。
 	fmt.Fprintf(w, "节点数: %d\n", nodeCount)
 	writeGroups(w, results, check.Fail, "【必须处理】")
-	writeGroups(w, results, check.Error, "【未能检查】")
+	writeBySource(w, results, check.SourceCollect, "【未能确认】", "以下项采集失败，无法确认集群状态。请检查节点连通性与凭据后重新运行。")
+	writeBySource(w, results, check.SourceToolGap, "【工具未覆盖】", "以下内容是工具的能力边界，不代表集群有问题。需用离线快照补充。")
 	writeGroups(w, results, check.Info, "【参考信息】")
+}
+
+// writeBySource 输出某一来源的 ERROR，并附一行说明归属与处理方式，明确边界。
+func writeBySource(w io.Writer, results []check.Result, source check.Source, section, note string) {
+	var subset []check.Result
+	for _, r := range results {
+		if r.Status == check.Error && r.Source == source {
+			subset = append(subset, r)
+		}
+	}
+	if len(subset) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "\n%s %s\n", section, note)
+	writeGroupsOf(w, subset, check.Error, section)
 }
 
 // writeGroups 按规则分组输出同一状态的结果：每条规则一个标题，下面逐行列出各目标。
 // 同一规则只出现一次标题，避免按节点重复。
 func writeGroups(w io.Writer, results []check.Result, status check.Status, section string) {
+	var subset []check.Result
+	for _, r := range results {
+		if r.Status == status {
+			subset = append(subset, r)
+		}
+	}
+	if len(subset) == 0 {
+		return
+	}
+	writeGroupsOf(w, subset, status, section)
+}
+
+// writeGroupsOf 按规则分组输出结果，同一规则只出现一次标题。
+func writeGroupsOf(w io.Writer, results []check.Result, status check.Status, section string) {
 	var order []string
 	groups := map[string][]check.Result{}
 	for _, r := range results {
@@ -187,7 +216,13 @@ func writeGroups(w io.Writer, results []check.Result, status check.Status, secti
 			for _, g := range groupByActual(rs) {
 				fmt.Fprintf(w, "    %s\n        实际: %s  期望: %s\n", strings.Join(g.targets, "、"), g.actual, rs[0].Expect)
 			}
-			fmt.Fprintf(w, "    影响: %s\n    处理: %s\n", orPending(rs[0].Impact), orPending(rs[0].Hint))
+			// 影响与处理只在规则提供内容时显示，空占位不输出，避免干扰判断。
+			if rs[0].Impact != "" {
+				fmt.Fprintf(w, "    影响: %s\n", rs[0].Impact)
+			}
+			if rs[0].Hint != "" {
+				fmt.Fprintf(w, "    处理: %s\n", rs[0].Hint)
+			}
 		case check.Error:
 			for _, r := range rs {
 				fmt.Fprintf(w, "    %s  原因: %s\n", r.Target, r.Error)
@@ -220,12 +255,4 @@ func groupByActual(rs []check.Result) []actualGroup {
 		out[i].targets = append(out[i].targets, r.Target)
 	}
 	return out
-}
-
-// orPending 为空时返回占位文字，避免输出空的影响或处理。
-func orPending(v string) string {
-	if v == "" {
-		return "（待补充）"
-	}
-	return v
 }

@@ -125,8 +125,9 @@ func TestWorkerMixedVersionFailsVER01(t *testing.T) {
 	if !strings.Contains(out, "【必须处理】 工作节点 kubelet 版本与控制面一致（VER-01）") {
 		t.Errorf("应在【必须处理】下列出 VER-01 并带标题，实际: %s", out)
 	}
-	if !strings.Contains(out, "影响: （待补充）") {
-		t.Errorf("影响未填写时应显示占位，实际: %s", out)
+	// 规则未填写影响与处理时，不显示空占位，避免干扰判断。
+	if strings.Contains(out, "（待补充）") {
+		t.Errorf("不应输出空占位，实际: %s", out)
 	}
 }
 
@@ -460,5 +461,63 @@ func TestSameValueNodesAreMerged(t *testing.T) {
 		if !strings.Contains(out, name) {
 			t.Errorf("合并后应保留节点名 %s，实际: %s", name, out)
 		}
+	}
+}
+
+// 工具问题与集群问题在输出中分开：工具未覆盖单独成块并注明“不代表集群有问题”。
+func TestToolGapIsSeparatedFromCollectFailure(t *testing.T) {
+	// 实时模式下 config.* 无数据来源：删除快照中的 config 字段，模拟工具未覆盖。
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	path := filepath.Join(dir, "cluster.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var c map[string]any
+	if err := json.Unmarshal(data, &c); err != nil {
+		t.Fatal(err)
+	}
+	delete(c, "config")
+	out2, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, out2, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	code, out, _ := runArgs(t, "check", "--snapshot", dir)
+	if code != exitOK {
+		t.Fatalf("退出码 = %d，工具未覆盖不应阻断", code)
+	}
+	if !strings.HasPrefix(out, "正常\n") {
+		t.Errorf("工具未覆盖不影响结论，应为正常，实际: %q", out)
+	}
+	if !strings.Contains(out, "【工具未覆盖】") || !strings.Contains(out, "不代表集群有问题") {
+		t.Errorf("工具未覆盖应单独成块并注明边界，实际: %s", out)
+	}
+	if strings.Contains(out, "【未能确认】") {
+		t.Errorf("无采集失败时不应出现【未能确认】，实际: %s", out)
+	}
+}
+
+// 采集失败：结论为未能确认，退出码 1，且不被写成正常。
+func TestCollectFailureGivesUnconfirmedAndExitOne(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	// 删除 cp-2 的采集文件，模拟节点采集失败。
+	if err := os.Remove(filepath.Join(dir, "nodes", "cp-2.json")); err != nil {
+		t.Fatal(err)
+	}
+	code, out, _ := runArgs(t, "check", "--snapshot", dir)
+	if code != exitBad {
+		t.Errorf("退出码 = %d，采集失败应为 %d", code, exitBad)
+	}
+	if !strings.HasPrefix(out, "未能确认\n") {
+		t.Errorf("结论应为未能确认，实际: %q", out)
+	}
+	if !strings.Contains(out, "【未能确认】") || !strings.Contains(out, "请检查节点连通性") {
+		t.Errorf("应单独成块并说明处理方式，实际: %s", out)
 	}
 }

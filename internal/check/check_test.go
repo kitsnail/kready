@@ -124,8 +124,9 @@ func TestMissingNodeFileIsError(t *testing.T) {
 	delete(s.Nodes, "cp-2")
 
 	results := check.Run(p, s)
-	if got := check.Conclusion(results); got != "异常" {
-		t.Errorf("结论 = %q，期望 异常（cp-2 缺采集数据）", got)
+	// 采集失败不是确认的不合规，但也不能输出“正常”：结论为“未能确认”。
+	if got := check.Conclusion(results); got != "未能确认" {
+		t.Errorf("结论 = %q，期望 未能确认（cp-2 缺采集数据，不得判为正常）", got)
 	}
 	found := false
 	for _, r := range results {
