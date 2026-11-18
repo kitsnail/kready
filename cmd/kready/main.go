@@ -158,9 +158,9 @@ func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	fmt.Fprintln(w, check.Conclusion(results))
 	// 如实反映 kubectl 发现的节点数，不与期望值比较（节点数不作为判定项）。
 	fmt.Fprintf(w, "节点数: %d\n", nodeCount)
-	writeGroups(w, results, check.Fail, "不合规")
-	writeGroups(w, results, check.Error, "无法判定")
-	writeGroups(w, results, check.Info, "信息")
+	writeGroups(w, results, check.Fail, "【必须处理】")
+	writeGroups(w, results, check.Error, "【未能检查】")
+	writeGroups(w, results, check.Info, "【参考信息】")
 }
 
 // writeGroups 按规则分组输出同一状态的结果：每条规则一个标题，下面逐行列出各目标。
@@ -179,7 +179,7 @@ func writeGroups(w io.Writer, results []check.Result, status check.Status, secti
 	}
 	for _, id := range order {
 		rs := groups[id]
-		fmt.Fprintf(w, "\n%s  %s\n", section, label(rs[0]))
+		fmt.Fprintf(w, "\n%s %s\n", section, label(rs[0]))
 		for _, r := range rs {
 			switch status {
 			case check.Fail:
@@ -190,5 +190,17 @@ func writeGroups(w io.Writer, results []check.Result, status check.Status, secti
 				fmt.Fprintf(w, "    %s  当前: %s\n", r.Target, r.Actual)
 			}
 		}
+		// 影响与处理：规则未填写时显示占位，不编造内容（待逐项研究后补充）。
+		if status == check.Fail {
+			fmt.Fprintf(w, "    影响: %s\n    处理: %s\n", orPending(rs[0].Impact), orPending(rs[0].Hint))
+		}
 	}
+}
+
+// orPending 为空时返回占位文字，避免输出空的影响或处理。
+func orPending(v string) string {
+	if v == "" {
+		return "（待补充）"
+	}
+	return v
 }

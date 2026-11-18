@@ -122,8 +122,11 @@ func TestWorkerMixedVersionFailsVER01(t *testing.T) {
 		t.Fatalf("退出码 = %d，期望 %d", code, exitBad)
 	}
 	// 新格式：标题在前，ID 在括号中；应标为“不合规”并给出标题与 ID。
-	if !strings.Contains(out, "不合规  工作节点 kubelet 版本与控制面一致（VER-01）") {
-		t.Errorf("应对 VER-01 报不合规并带标题，实际: %s", out)
+	if !strings.Contains(out, "【必须处理】 工作节点 kubelet 版本与控制面一致（VER-01）") {
+		t.Errorf("应在【必须处理】下列出 VER-01 并带标题，实际: %s", out)
+	}
+	if !strings.Contains(out, "影响: （待补充）") {
+		t.Errorf("影响未填写时应显示占位，实际: %s", out)
 	}
 }
 

@@ -32,6 +32,8 @@ type Result struct {
 	Actual string `json:"actual"`
 	Expect string `json:"expect,omitempty"`
 	Error  string `json:"error,omitempty"`
+	Impact string `json:"impact,omitempty"`
+	Hint   string `json:"hint,omitempty"`
 }
 
 // Run 对快照执行所有 active 规则。结果顺序与规则包顺序一致，节点按名排序。
@@ -56,9 +58,11 @@ func Run(p *rules.Pack, s *snapshot.Snapshot) []Result {
 	return out
 }
 
-// withTitle 把规则的中文标题写入结果，便于一线工程师直接读懂，不必查 ID 对照表。
+// withTitle 把规则的标题、影响与处理写入结果。影响与处理为空时保持为空，不编造内容。
 func withTitle(res Result, r rules.Rule) Result {
 	res.Title = r.Title
+	res.Impact = r.Impact
+	res.Hint = r.Hint
 	return res
 }
 

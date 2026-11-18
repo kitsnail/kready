@@ -34,6 +34,9 @@ type Rule struct {
 	Field   string            `yaml:"field,omitempty"`
 	Check   string            `yaml:"check,omitempty"`
 	Expect  map[string]string `yaml:"expect,omitempty"`
+	// Impact、Hint 为占位，内容待逐项研究确定后填写。空值不输出，不编造内容。
+	Impact string `yaml:"impact,omitempty"`
+	Hint   string `yaml:"hint,omitempty"`
 }
 
 // Collect 声明节点级取数方式，命令 ID 必须在采集层白名单中。
