@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- 治理规则：Agent 可合并自己开的、满足合并条件的 PR（门禁文件仍需人工批准）；可在合并到 `main` 后打正式版本 tag。见 `AGENTS.md`、`docs/design/versioning.md`。
 - 版本计算改用 release-please（社区标准工具），替代自定义的 `scripts/next-version.sh`，该脚本已删除。
 - 新增 `release-please` 工作流：只创建 Release PR，正式 tag 由人执行。
 - 结论三态：`正常`、`异常`、`未能确认`。结论只描述集群。`未能确认` 表示采集失败，无法确认集群状态，不得写成正常。
