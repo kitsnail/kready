@@ -1,0 +1,23 @@
+# 只定义构建与 ldflags 注入，不启用发布、签名或 Docker。
+# 版本由 git tag 驱动，见 docs/design/versioning.md。
+version: 2
+
+project_name: kready
+
+builds:
+  - id: kready
+    main: ./cmd/kready
+    binary: kready
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -X main.version={{ .Version }}
+
+release:
+  disable: true

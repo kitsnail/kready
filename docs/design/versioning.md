@@ -64,9 +64,9 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 ## 七、分支与发布
 
 - `main` 始终满足 `make check`。
-- 功能分支合入 `main` 由人执行，合并后删除分支。
+- 功能分支合入 `main`：Agent 可合并自己开的、满足 AGENTS.md「合并条件」的 PR，合并后删除分支。涉及门禁文件的 PR 须先经人工批准。
 - `rc` 标签（如 `v0.3.0-rc.1`）：Agent 可在 `make check` 通过后打，用于真实集群验证。
-- 正式标签（如 `v0.3.0`）：由人执行，并确认 CHANGELOG 与规则变更说明。
+- 正式标签（如 `v0.3.0`）：在合并到 `main` 之后，由 Agent 执行，版本须与 `.release-please-manifest.json` 一致。
 - 发布不按日历，有规则变更或缺陷修复时发布。
 
 ## 八、CHANGELOG
