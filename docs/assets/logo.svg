@@ -1,15 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="497.48" height="565" viewBox="0 0 497.48 565" role="img" aria-labelledby="kready-logo-title">
-  <title id="kready-logo-title">kready</title>
-  <!-- 六边形环：尖角朝上 -->
-  <polygon points="248.74,30.5 466.98,156.5 466.98,408.5 248.74,534.5 30.5,408.5 30.5,156.5" fill="none" stroke="#326CE5"
-           stroke-width="29" stroke-linejoin="round"/>
-  <!-- 白色内芯 -->
-  <polygon points="248.74,64.5 437.53,173.5 437.53,391.5 248.74,500.5 59.94,391.5 59.94,173.5" fill="#FFFFFF"/>
-  <!-- 对勾：圆头蓝色笔画 -->
-  <path d="M153.74 212.5 L248.74 437.5 L383.74 207.5"
-        fill="none" stroke="#326CE5" stroke-width="66"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- 右上角状态点 -->
-  <circle cx="421.47" cy="170.32" r="20" fill="#25CE71"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 外部蓝色六边形底色 -->
+  <polygon points="128,16 226,72 226,184 128,240 30,184 30,72" fill="#326CE5" />
+  
+  <!-- 内部白色描边六边形（右上角留出缺口以容纳状态圆点） -->
+  <polyline points="182,74 128,43 52,86 52,170 128,213 204,170 204,116" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="butt" stroke-linejoin="miter" />
+  
+  <!-- 右上角绿色状态圆点 (Ready Status) -->
+  <circle cx="198" cy="92" r="11" fill="#22C55E" />
+  
+  <!-- 居中白色粗体对勾 -->
+  <polyline points="92,130 118,156 168,106" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter" />
 </svg>
