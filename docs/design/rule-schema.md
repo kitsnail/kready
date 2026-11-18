@@ -12,7 +12,8 @@
 | `mode` | 是 | `judge`：判定 PASS/FAIL；`info`：仅输出当前值 |
 | `scope` | 是 | `cluster` / `node` |
 | `source` | 是 | 依据，仅用于追溯，如 `new-cluster-config-guide.md:§4`。运行时不读取 |
-| `collect` | 否 | 取数据方式，见下文。缺省表示从 API 读取 |
+| `field` | 集群级 `judge` 必填 | 集群级取值方式：`config.<key>` 读取快照 `config` 中的字段；`kubelet_versions` 全部节点 kubelet 版本（去重，逗号连接）；`count_role` 按 `expect.role` 计数节点。节点级不用 `field`，用 `collect` |
+| `collect` | 否 | 取数据方式，见下文。缺省表示集群级取值（由 `field` 声明） |
 | `check` | `judge` 时必填 | 判断方式，见下文 |
 | `expect` | `judge` 时必填 | 期望值，格式由 `check` 决定 |
 | `severity` | `judge` 时必填 | `error`：不符合时输出 FAIL，结论为异常；`warn`：输出 WARN，结论不变。取值规则随规则逐步定义 |

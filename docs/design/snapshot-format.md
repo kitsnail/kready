@@ -26,16 +26,22 @@ testdata/
   "pods": [
     { "namespace": "kube-system", "name": "kube-vip-mn-1", "ready": true, "restarts": 0 }
   ],
-  "kcm": { "memory_request": "512Mi", "memory_limit": "1Gi", "startup_probe": true }
+  "config": {
+    "etcd_version": "3.6.14",
+    "kube_proxy_mode": "nftables",
+    "etcd_quota_backend_bytes": "8589934592",
+    "metrics_server_replicas": "3"
+  }
 }
 ```
 
-- 节点角色由 `labels` 推导，规则见 `rule-schema.md`。
-- 字段名与判断方式对应。新增字段须同时更新本文件。
+- `nodes`：所有节点；`kubelet` 为节点 kubelet 版本。节点角色由 `labels` 推导（`node-role.kubernetes.io/control-plane` 存在即为控制面）。
+- `config`：集群配置项的字符串值，规则通过 `field: config.<key>` 引用。
+- 规则通过 `field` 声明取值方式，见 `rule-schema.md`。新增 `config` 键须同时更新本文件与规则。
 
 ## nodes/<node>.json
 
-键为白名单命令 ID，值为该命令去除首尾空白后的输出。
+键为白名单命令 ID（与规则 `collect.command` 一致），值为该命令去除首尾空白后的输出。
 
 ```json
 {
