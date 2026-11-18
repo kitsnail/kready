@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">kready logo</title>
-  <!-- 六边形：Kubernetes 风格蓝色 -->
-  <path d="M256 40 L440 146 L440 366 L256 472 L72 366 L72 146 Z" fill="#326CE5"/>
-  <!-- 白色对勾：就绪检查 -->
-  <path d="M164 262 L228 326 L356 190" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- 右下角绿色就绪指示点 -->
-  <circle cx="400" cy="392" r="48" fill="#2EB67D" stroke="#FFFFFF" stroke-width="16"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="497.48" height="565" viewBox="0 0 497.48 565" role="img" aria-labelledby="kready-logo-title">
+  <title id="kready-logo-title">kready</title>
+  <!-- 六边形环：尖角朝上 -->
+  <polygon points="248.74,30.5 466.98,156.5 466.98,408.5 248.74,534.5 30.5,408.5 30.5,156.5" fill="none" stroke="#326CE5"
+           stroke-width="29" stroke-linejoin="round"/>
+  <!-- 白色内芯 -->
+  <polygon points="248.74,64.5 437.53,173.5 437.53,391.5 248.74,500.5 59.94,391.5 59.94,173.5" fill="#FFFFFF"/>
+  <!-- 对勾：圆头蓝色笔画 -->
+  <path d="M153.74 212.5 L248.74 437.5 L383.74 207.5"
+        fill="none" stroke="#326CE5" stroke-width="66"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 右上角状态点 -->
+  <circle cx="421.47" cy="170.32" r="20" fill="#25CE71"/>
 </svg>

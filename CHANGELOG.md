@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Changed
-- 新增项目 logo：`docs/assets/logo.svg`（蓝色六边形、白色对勾、绿色就绪指示点，不含文字）。
+- 重绘项目 logo：`docs/assets/logo.svg` 由 `logo.jpeg` 精修而来。原件是实心蓝六边形配白色对勾，改造为通行的「描边六边形环 + 蓝色对勾 + 右上角绿色状态点」，底色透明，可直接压在任意背景上。几何取自原图实测（六边形 436x504、环宽 29、对勾笔画 66），画布留 16 单位等宽留白。
 - 新增根目录 `README.md`：项目定位、适用范围、快速开始（附真实输出）、用法、退出码、开发命令与文档索引。
 - release-please 工作流改用 `RELEASE_PLEASE_TOKEN`（个人访问令牌）创建 Release PR，绕开仓库中被禁用的 Actions 建 PR 权限。
 - 构建注入版本：`make build` 通过 `-ldflags` 注入 `main.version`，来源为 `git describe`。`kready version` 可显示版本。新增 `.goreleaser.yaml`，仅定义构建，不启用发布。
