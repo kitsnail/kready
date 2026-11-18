@@ -9,8 +9,54 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
       - name: make check
         run: make check
+
+      # 方案 B：修改门禁文件的 PR 必须在正文引用已批准的决策编号 D-nnn。
+      - name: 门禁文件须引用决策（D-nnn）
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          gated=$(printf '%s\n' "$changed" | grep -E '^(Makefile|\.github/|\.githooks/|rules/|testdata/)' || true)
+          if [ -z "$gated" ]; then
+            echo "未修改门禁文件，跳过。"
+            exit 0
+          fi
+          echo "修改了门禁文件："
+          echo "$gated"
+          if printf '%s' "$PR_BODY" | grep -Eq 'D-[0-9]{3}'; then
+            echo "PR 正文已引用决策编号。"
+            exit 0
+          fi
+          echo "错误：修改门禁文件的 PR 正文必须引用已批准的决策编号（例如 D-009）。" >&2
+          exit 1
+
+      # 方案 C：修改产品代码或规则时，须同时更新 CHANGELOG.md。
+      - name: 产品改动须更新 CHANGELOG
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          changed=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          product=$(printf '%s\n' "$changed" | grep -E '^(internal/|cmd/|rules/)' || true)
+          if [ -z "$product" ]; then
+            echo "未修改产品代码或规则，跳过。"
+            exit 0
+          fi
+          if printf '%s\n' "$changed" | grep -qx 'CHANGELOG.md'; then
+            echo "产品改动已同步更新 CHANGELOG.md。"
+            exit 0
+          fi
+          echo "错误：修改了产品代码或规则，但未更新 CHANGELOG.md。" >&2
+          echo "$product" >&2
+          exit 1

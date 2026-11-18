@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Changed
+- CI 门禁（方案 B、C）：修改 `Makefile`、`.github/`、`.githooks/`、`rules/`、`testdata/` 的 PR 须在正文引用 `D-nnn`；修改 `internal/`、`cmd/`、`rules/` 的 PR 须同时更新 `CHANGELOG.md`。仅对 `pull_request` 事件生效。
 - PR 模板（`.github/pull_request_template.md`）：要求写明范围、门禁文件与引用的 `D-nnn`、CHANGELOG 状态与 `make check` 结果。
 - 仓库迁移至 `kitsnail/kready`，Go 模块路径同步改为 `github.com/kitsnail/kready`（`go.mod` 与全部 import）。旧仓库 `scclabs/kready` 已删除。
 - 决策留痕：回溯补记 D-004 至 D-007，并将原 D-008 并入 D-001（见 `docs/product/decisions.md`）。
