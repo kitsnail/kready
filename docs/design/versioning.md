@@ -57,7 +57,8 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 
 - 工具：release-please（清单模式），配置见 `release-please-config.json`，当前版本见 `.release-please-manifest.json`。
 - 流程：推送到 `main` 后，工作流创建或更新 Release PR。合并 Release PR 后，由 Agent 打正式 tag（权责见 AGENTS.md「提交与版本」）；人负责验收版本号与发布内容。
-- 凭据：工作流使用内置 `GITHUB_TOKEN`，依赖组织设置 `can_approve_pull_request_reviews` 为 `true`（Actions 才可建 PR）。**若该开关被关闭，Release PR 将无法创建**，届时需改用 PAT 或 GitHub App token。不使用长期 PAT，避免凭据过期导致工作流静默失败。
+- 凭据：工作流使用内置 `GITHUB_TOKEN`，需要仓库 Actions 设置中 `can_approve_pull_request_reviews` 为 `true`（Actions 才可建 PR）。**若该开关被关闭，Release PR 将无法创建**，失败信息为 `GitHub Actions is not permitted to create or approve pull requests`。仓库迁移不会自动挂载该设置，每次迁移后须核对。不使用长期 PAT，避免凭据过期导致工作流静默失败。
+- 基线：release-please 以最近的发布 tag 为起点计算版本。若 tag 未推送到远端，所有历史提交都会被当作“未发布”，导致版本号计算错误（例：0.1.0 错升为 0.2.0）。**每次发布后须确认 tag 与 Release 已推送**。
 - 0.x 规则：`bump-minor-pre-major` 为真，即破坏性变更升 MINOR，`feat`、`fix` 升 PATCH。**这是项目选择，不是 SemVer 或社区的强制规定**；SemVer 只规定 0.x 阶段"可以随时变化"。
 - 1.0 之后：破坏性变更升 MAJOR，`feat` 升 MINOR，`fix` 升 PATCH。
 - 首个版本：`v0.1.0`，由清单文件设定。
