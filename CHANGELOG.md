@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- 原型验证记录：`docs/design/prototype-verification.md`，列出 10 项已验证行为（选包、基线、ERROR、JSON、退出码）。
 - 检查切片（2.32）：规则包 `rules/2.32/rules.yaml`（8 条判定；NODE-05、SYS-04 为信息项）；`kready check --snapshot <目录>` 离线读取快照，输出正常/异常，异常时列出实际值与期望值。
 - 快照测试：`testdata/positive/2.32`（全部通过）与 `testdata/negative/2.32/<RULE-ID>/`（每条判定规则一个负例）。测试只使用快照。
 - NODE-05（内核自动升级服务状态）：判定方案未定，暂为信息项，仅输出当前值（见 `docs/rules/2.32-draft.md` 待确认 5）。
@@ -25,7 +26,6 @@
 - 节点采集文件缺失时，原实现静默跳过该节点，结论可能误报"正常"。现以 `cluster.nodes` 为准，缺失节点报 ERROR，结论为异常。
 - 信息项（INFO）缺值时，集群级原输出空的当前值。现与节点级一致，报 ERROR。
 
-### Changed
 - 设计文档移至 `docs/design/kready-design.md`。
 - 规则草案移至 `docs/rules/2.32-draft.md`，待转换为 YAML 后删除。
 - 输出契约：结论改为"正常 / 异常"，新增 WARN 状态（不改变结论），退出码 0 为正常、不含 FAIL 与 ERROR。
