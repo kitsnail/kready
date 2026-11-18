@@ -73,9 +73,12 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 
 ## 八、CHANGELOG
 
-- 格式：Keep a Changelog，分 Added / Changed / Deprecated / Removed / Fixed。
+- 维护者：Agent。每个影响产品的 PR 须在同一 PR 中更新 `CHANGELOG.md` 的 `[Unreleased]`。人不直接编辑 CHANGELOG。
+- 格式：Keep a Changelog，分 Added / Changed / Deprecated / Removed / Fixed / Open。
 - 规则变更列出规则 ID，并说明对历史结论的影响。例如：`CP-06 期望值由 X 改为 Y，此前的 PASS 结论不再适用`。
 - 废弃规则：标记 Deprecated，至少保留一个 MINOR 版本后才能移除。
+- release-please 会自动追加条目。Release PR 合并前，Agent 须校正自动生成的条目，使其符合上述格式与分组。
+- 需要人决策的情况（例：破坏性变更的描述、版本号与发布内容），Agent 在 PR 中标注并提醒人。
 
 ## 九、待实施（B 类，需人工批准）
 
