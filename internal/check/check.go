@@ -48,19 +48,20 @@ func Run(p *rules.Pack, s *snapshot.Snapshot) []Result {
 }
 
 func runCluster(r rules.Rule, s *snapshot.Snapshot) Result {
-	if r.Mode == "info" {
-		return Result{ID: r.ID, Status: Info, Target: "cluster", Actual: clusterValue(r, s)}
-	}
 	actual := clusterValue(r, s)
 	expect := r.Expect["value"]
 	res := Result{ID: r.ID, Target: "cluster", Actual: actual, Expect: expect}
+	// 缺值一律 ERROR，信息项也不例外，避免输出空的"当前值="造成误判。
 	if actual == "" {
 		res.Status, res.Error = Error, "快照中缺少该字段"
 		return res
 	}
-	if actual == expect {
+	switch {
+	case r.Mode == "info":
+		res.Status = Info
+	case actual == expect:
 		res.Status = Pass
-	} else {
+	default:
 		res.Status = Fail
 	}
 	return res
@@ -94,9 +95,12 @@ func runNodes(r rules.Rule, s *snapshot.Snapshot) []Result {
 			continue
 		}
 		res.Actual = strings.TrimSpace(val)
-		if res.Actual == res.Expect {
+		switch {
+		case r.Mode == "info":
+			res.Status = Info
+		case res.Actual == res.Expect:
 			res.Status = Pass
-		} else {
+		default:
 			res.Status = Fail
 		}
 		out = append(out, res)

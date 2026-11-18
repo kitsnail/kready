@@ -85,3 +85,31 @@ func TestRuleIDsUnique(t *testing.T) {
 		seen[r.ID] = true
 	}
 }
+
+// 信息项缺值必须报 ERROR，不得输出空的当前值。
+func TestInfoMissingValueIsError(t *testing.T) {
+	p := loadPack(t)
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "2.32"))
+	if err != nil {
+		t.Fatalf("加载正例快照: %v", err)
+	}
+	delete(s.Cluster.Config, "metrics_server_replicas")
+	delete(s.Nodes["cp-1"], "unattended-upgrades-active")
+
+	results := check.Run(p, s)
+	var clusterErr, nodeErr bool
+	for _, r := range results {
+		if r.ID == "SYS-04" && r.Status == check.Error {
+			clusterErr = true
+		}
+		if r.ID == "NODE-05" && r.Target == "cp-1" && r.Status == check.Error {
+			nodeErr = true
+		}
+	}
+	if !clusterErr {
+		t.Errorf("集群级信息项缺值应为 ERROR；结果: %v", results)
+	}
+	if !nodeErr {
+		t.Errorf("节点级信息项缺值应为 ERROR；结果: %v", results)
+	}
+}

@@ -77,17 +77,14 @@ rules:
       value: "PasswordAuthentication no"
 
   - id: NODE-05
-    title: 内核自动升级已停用
+    title: 内核自动升级服务当前状态
     status: active
-    mode: judge
+    mode: info
     scope: node
-    source: 参考仓库 k8s/os/noupgrade.sh、nolinuxupgrades
+    source: 参考仓库 k8s/os/noupgrade.sh、nolinuxupgrades；判定方案未定（见 docs/rules/2.32-draft.md 待确认 5），暂仅输出当前值
     collect:
       command: unattended-upgrades-active
       as_root: true
-    check: equals
-    expect:
-      value: "inactive"
 
   - id: CP-01
     title: 控制面节点数
