@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Changed
+- 构建注入版本：`make build` 通过 `-ldflags` 注入 `main.version`，来源为 `git describe`。`kready version` 可显示版本。新增 `.goreleaser.yaml`，仅定义构建，不启用发布。
 - 治理规则：Agent 可合并自己开的、满足合并条件的 PR（门禁文件仍需人工批准）；可在合并到 `main` 后打正式版本 tag。见 `AGENTS.md`、`docs/design/versioning.md`。
 - 版本计算改用 release-please（社区标准工具），替代自定义的 `scripts/next-version.sh`，该脚本已删除。
 - 新增 `release-please` 工作流：只创建 Release PR，正式 tag 由人执行。

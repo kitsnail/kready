@@ -31,8 +31,12 @@ lint: goversion
 test: goversion
 	$(GO) test -race -count=1 $(PKG)
 
+# 版本由 git tag 驱动，注入 main.version；无 tag 时回退为提交号。
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+LDFLAGS := -X main.version=$(VERSION)
+
 build: goversion
-	$(GO) build -o bin/kready ./cmd/kready
+	$(GO) build -ldflags "$(LDFLAGS)" -o bin/kready ./cmd/kready
 
 check: lint test build
 
