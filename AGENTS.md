@@ -64,5 +64,12 @@ Agent 合并 PR 须同时满足：
 - 版本规则见 `docs/design/versioning.md`。版本号由 release-please 计算，不手写。
 - 正式版本 tag 在合并 Release PR 或对应发布提交到 `main` 后，由 Agent 执行，版本须与 `.release-please-manifest.json` 一致。
 
+## 分支
+
+- 命名：`<type>/<slug>`，type 取自提交类型（`feat`、`fix`、`docs`、`chore`、`refactor`、`test`）。
+- 从最新 `main` 切出，一个分支只做一个可验证的切片。
+- PR 合并后删除分支，远端与本地一并删除。仓库已开启「合并后自动删除源分支」。
+- release-please 的分支（`release-please--*`）由工具管理，不手工创建或删除。
+
 ## 文档风格
 简明，正向陈述，一个概念只定义一次。写"要做什么"，少写"不要做什么"（禁止项除外）。
