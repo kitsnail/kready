@@ -158,17 +158,37 @@ func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	fmt.Fprintln(w, check.Conclusion(results))
 	// 如实反映 kubectl 发现的节点数，不与期望值比较（节点数不作为判定项）。
 	fmt.Fprintf(w, "节点数: %d\n", nodeCount)
+	writeGroups(w, results, check.Fail, "不合规")
+	writeGroups(w, results, check.Error, "无法判定")
+	writeGroups(w, results, check.Info, "信息")
+}
+
+// writeGroups 按规则分组输出同一状态的结果：每条规则一个标题，下面逐行列出各目标。
+// 同一规则只出现一次标题，避免按节点重复。
+func writeGroups(w io.Writer, results []check.Result, status check.Status, section string) {
+	var order []string
+	groups := map[string][]check.Result{}
 	for _, r := range results {
-		switch r.Status {
-		case check.Fail:
-			fmt.Fprintf(w, "不合规  %s\n        目标: %s\n        实际: %s\n        期望: %s\n", label(r), r.Target, r.Actual, r.Expect)
-		case check.Error:
-			fmt.Fprintf(w, "无法判定  %s\n        目标: %s\n        原因: %s\n", label(r), r.Target, r.Error)
+		if r.Status != status {
+			continue
 		}
+		if _, ok := groups[r.ID]; !ok {
+			order = append(order, r.ID)
+		}
+		groups[r.ID] = append(groups[r.ID], r)
 	}
-	for _, r := range results {
-		if r.Status == check.Info {
-			fmt.Fprintf(w, "信息  %s\n        目标: %s\n        当前: %s\n", label(r), r.Target, r.Actual)
+	for _, id := range order {
+		rs := groups[id]
+		fmt.Fprintf(w, "\n%s  %s\n", section, label(rs[0]))
+		for _, r := range rs {
+			switch status {
+			case check.Fail:
+				fmt.Fprintf(w, "    %s  实际: %s  期望: %s\n", r.Target, r.Actual, r.Expect)
+			case check.Error:
+				fmt.Fprintf(w, "    %s  原因: %s\n", r.Target, r.Error)
+			case check.Info:
+				fmt.Fprintf(w, "    %s  当前: %s\n", r.Target, r.Actual)
+			}
 		}
 	}
 }
