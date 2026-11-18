@@ -151,7 +151,7 @@ func (r *SSHRunner) Run(ctx context.Context, ip, commandID string) (string, erro
 		if res.err != nil {
 			return "", fmt.Errorf("命令 %s 执行失败: %w", commandID, res.err)
 		}
-		return strings.TrimSpace(string(res.out)), nil
+		return applyExtractor(commandID, strings.TrimSpace(string(res.out)))
 	case <-ctx.Done():
 		return "", fmt.Errorf("命令 %s 超时", commandID)
 	}
