@@ -74,4 +74,10 @@
 - 依据：`docs/design/kready-home.md`，文档状态写明"已确认（用户决定，作为未来项目的标准）"。
 - 决策人：kitsnail
 
+### D-009 CI 门禁：门禁文件须引用 D-nnn，产品改动须更新 CHANGELOG（2026-11-19）
 
+- 决策：修改 `Makefile`、`.github/`、`.githooks/`、`rules/`、`testdata/` 的 PR，正文须引用一条已批准的 `D-nnn`，否则 CI 失败；修改 `internal/`、`cmd/`、`rules/` 的 PR，须同时更新 `CHANGELOG.md`，否则 CI 失败。两项检查仅对 `pull_request` 事件生效。
+- 原因：把"门禁须经人工批准"与"每次产品改动同步 CHANGELOG"从人工自觉变成 CI 机制。
+- 影响：`.github/workflows/ci.yml`；`CHANGELOG.md` 的维护规则（`docs/design/versioning.md` 第八节）。
+- 依据：人批准方案 B、C 的实施（本次会话，2026-11-19）；PR 模板 PR #11 已合并。
+- 决策人：kitsnail
