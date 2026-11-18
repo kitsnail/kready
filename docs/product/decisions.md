@@ -48,7 +48,7 @@
 - 原因：原型阶段规则够用即可，判定方案未定前不做真实采集。
 - 影响：NODE-05（`rules/2.32/rules.yaml`、`docs/rules/2.32-draft.md` 待确认第 5 条）；`docs/design/prototype-verification.md`。
 - 依据：提交 `6726f3a`。
-- 决策人：待确认
+- 决策人：kitsnail
 
 ### D-005 规则包选择与 VER-01 语义（2026-11-18）
 
@@ -56,7 +56,7 @@
 - 原因：控制面版本决定适用的规则包，工作节点需与之一致，不一致即为异常。
 - 影响：VER-01；`rules/2.32/rules.yaml`；输出退出码语义（工作节点不一致由退出码 2 改为 1）。
 - 依据：CHANGELOG `[0.1.0]` 的 Changed 条目（标注"B 类，已确认"）；提交 `f12c241`。
-- 决策人：待确认
+- 决策人：kitsnail
 
 ### D-006 节点级检查通过 SSH 只读采集（2026-11-18）
 
@@ -64,7 +64,7 @@
 - 原因：规则中的节点检查（inotify、sshd 配置、内核自动升级等）需读取节点本机状态，Kubernetes API 无法提供。
 - 影响：`internal/collect`；`golang.org/x/crypto` 依赖（见 CHANGELOG `[0.1.0]`）。
 - 依据：`docs/decisions/0001-node-collection-via-ssh.md`（状态：已接受，2026-11-18）。
-- 决策人：待确认
+- 决策人：kitsnail
 
 ### D-007 本地目录标准 KREADY_HOME（2026-11-18）
 
