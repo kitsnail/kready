@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Added
+- 本地目录标准：`docs/design/kready-home.md`。统一放在 `KREADY_HOME`（默认 `$HOME/.kready`），子目录 `bin/ config/ logs/ reports/ snapshots/ tmp/` 为项目标准。目录 0700，文件 0600。
+- 默认写入：`check` 每次把报告写入 `reports/`（文本或 JSON，与终端一致）；`--live` 另把采集快照写入 `snapshots/<时间戳>/`，可用 `--snapshot` 复现判定。同一秒多次运行加序号，不覆盖旧文件。
+- 失败策略：目录不可用时判定前报错（退出码 2）；报告或快照写入失败只警告，不改变判定结果。
 - 实时采集：`kready check --live`。kubectl 只读取节点清单（`get nodes`）并选包；选包成功后按规则包声明的命令，通过 SSH（root，ssh-agent，校验 known_hosts）只读采集节点。`--snapshot` 与 `--live` 二选一。
 - 采集白名单：`internal/collect` 将命令 ID 映射为固定只读命令（4 条，与规则包一致）。执行层只接收 ID，拒绝未知 ID。
 - 依赖：`golang.org/x/crypto`。理由：标准库无 SSH 客户端，ADR 0001 要求 SSH 采集且校验 known_hosts。
