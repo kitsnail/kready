@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+# commit-msg 钩子：校验提交首行符合 Conventional Commits。
+# 类型与 docs/design/versioning.md 第五节一致；scope 可选；破坏性变更用 "!" 标记。
+# 放行：GitHub 生成的合并提交与 revert 提交。
+
+msg_file="$1"
+subject=$(head -n 1 "$msg_file")
+
+case "$subject" in
+  "Merge "*|"Revert "*) exit 0 ;;
+esac
+
+pattern='^(feat|fix|docs|chore|refactor|test|ci|build)(\([a-z0-9._-]+\))?!?: .+'
+
+if printf '%s\n' "$subject" | grep -Eq "$pattern"; then
+  exit 0
+fi
+
+echo "提交信息不符合 Conventional Commits：" >&2
+echo "  $subject" >&2
+echo "格式：<type>(<scope>)?: <描述>，type 取 feat/fix/docs/chore/refactor/test/ci/build。" >&2
+echo "示例：docs(governance): 更新分支规则" >&2
+exit 1

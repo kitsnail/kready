@@ -1,24 +1,43 @@
 name: release-please
 
 # 只创建或更新 Release PR，不自动打 tag、不发布。
-# 合并 Release PR 后，正式 tag 由人确认并执行（见 docs/design/versioning.md）。
+# 合并 Release PR 后，正式 tag 由 Agent 执行，人负责验收（见 AGENTS.md「提交与版本」与 docs/design/versioning.md）。
+# 失败时创建或更新待办 Issue（见下方「失败告警」步骤）。
 # 使用内置 GITHUB_TOKEN：组织已开启 can_approve_pull_request_reviews，
 # Actions 可创建 PR，无需长期 PAT（避免凭据过期导致工作流静默失效）。
 on:
   push:
     branches:
       - main
-
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - name: release-please
+        id: release
+        uses: googleapis/release-please-action@v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 失败时创建或更新一个固定标题的 Issue，留下可见记录，避免静默失败。
+      - name: 失败告警
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="[release-please] 工作流失败"
+          body="release-please 在 ${GITHUB_SHA} 上失败，详见：${RUN_URL}"
+          existing=$(gh issue list --state open --search "in:title $title" --json number -q '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body" --label bug
+          fi
