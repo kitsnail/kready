@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- 输出可读性：每条结果以中文标题开头，ID 放括号中（`标题（ID）`）；标题取自规则包。文本报告按状态分段：不合规、无法判定、信息，各项竖排。JSON 结果新增可选字段 `title`。
 - 文本报告第二行输出节点数（`节点数: N`），如实反映 kubectl 发现的节点数。节点数不作为判定项，不做期望检查。
 - 本地目录标准：`docs/design/kready-home.md`。统一放在 `KREADY_HOME`（默认 `$HOME/.kready`），子目录 `bin/ config/ logs/ reports/ snapshots/ tmp/` 为项目标准。目录 0700，文件 0600。
 - 默认写入：`check` 每次把报告写入 `reports/`（文本或 JSON，与终端一致）；`--live` 另把采集快照写入 `snapshots/<时间戳>/`，可用 `--snapshot` 复现判定。同一秒多次运行加序号，不覆盖旧文件。

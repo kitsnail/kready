@@ -145,6 +145,15 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 }
 
 // writeReport 输出人类可读结论：第一行为结论，异常时列出 FAIL 与 ERROR，最后列出 INFO。
+// label 返回结果的显示名：有标题时为"标题（ID）"，否则只显示 ID。
+// 标题在前便于直接阅读，ID 保留以便对照规则包与文档。
+func label(r check.Result) string {
+	if r.Title == "" {
+		return r.ID
+	}
+	return r.Title + "（" + r.ID + "）"
+}
+
 func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	fmt.Fprintln(w, check.Conclusion(results))
 	// 如实反映 kubectl 发现的节点数，不与期望值比较（节点数不作为判定项）。
@@ -152,14 +161,14 @@ func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	for _, r := range results {
 		switch r.Status {
 		case check.Fail:
-			fmt.Fprintf(w, "FAIL  %s  %s  实际=%s  期望=%s\n", r.ID, r.Target, r.Actual, r.Expect)
+			fmt.Fprintf(w, "不合规  %s\n        目标: %s\n        实际: %s\n        期望: %s\n", label(r), r.Target, r.Actual, r.Expect)
 		case check.Error:
-			fmt.Fprintf(w, "ERROR %s  %s  %s\n", r.ID, r.Target, r.Error)
+			fmt.Fprintf(w, "无法判定  %s\n        目标: %s\n        原因: %s\n", label(r), r.Target, r.Error)
 		}
 	}
 	for _, r := range results {
 		if r.Status == check.Info {
-			fmt.Fprintf(w, "INFO  %s  %s  当前值=%s\n", r.ID, r.Target, r.Actual)
+			fmt.Fprintf(w, "信息  %s\n        目标: %s\n        当前: %s\n", label(r), r.Target, r.Actual)
 		}
 	}
 }

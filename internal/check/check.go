@@ -26,6 +26,7 @@ const (
 // Result 是一条判定结果（一个目标一条）。
 type Result struct {
 	ID     string `json:"id"`
+	Title  string `json:"title,omitempty"`
 	Status Status `json:"status"`
 	Target string `json:"target"`
 	Actual string `json:"actual"`
@@ -40,17 +41,25 @@ func Run(p *rules.Pack, s *snapshot.Snapshot) []Result {
 		switch r.Scope {
 		case "cluster":
 			if r.Check == "equal_baseline" {
-				out = append(out, runBaseline(r, s))
+				out = append(out, withTitle(runBaseline(r, s), r))
 				continue
 			}
-			out = append(out, runCluster(r, s))
+			out = append(out, withTitle(runCluster(r, s), r))
 		case "node":
-			out = append(out, runNodes(r, s)...)
+			for _, res := range runNodes(r, s) {
+				out = append(out, withTitle(res, r))
+			}
 		default:
 			out = append(out, Result{ID: r.ID, Status: Error, Target: r.Scope, Error: "未知 scope"})
 		}
 	}
 	return out
+}
+
+// withTitle 把规则的中文标题写入结果，便于一线工程师直接读懂，不必查 ID 对照表。
+func withTitle(res Result, r rules.Rule) Result {
+	res.Title = r.Title
+	return res
 }
 
 func runCluster(r rules.Rule, s *snapshot.Snapshot) Result {
