@@ -124,7 +124,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		}
 		content = b
 	} else {
-		content = renderText(results)
+		content = renderText(len(snap.Cluster.Nodes), results)
 	}
 	if err := tee(stdout, content); err != nil {
 		fmt.Fprintln(stderr, err)
@@ -145,8 +145,10 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 }
 
 // writeReport 输出人类可读结论：第一行为结论，异常时列出 FAIL 与 ERROR，最后列出 INFO。
-func writeReport(w io.Writer, results []check.Result) {
+func writeReport(w io.Writer, nodeCount int, results []check.Result) {
 	fmt.Fprintln(w, check.Conclusion(results))
+	// 如实反映 kubectl 发现的节点数，不与期望值比较（节点数不作为判定项）。
+	fmt.Fprintf(w, "节点数: %d\n", nodeCount)
 	for _, r := range results {
 		switch r.Status {
 		case check.Fail:

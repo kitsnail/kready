@@ -54,9 +54,9 @@ func (s *store) saveSnapshot(now time.Time, snap *snapshot.Snapshot) (string, er
 }
 
 // renderText 把文本报告渲染为字节，与终端输出一致。
-func renderText(results []check.Result) []byte {
+func renderText(nodeCount int, results []check.Result) []byte {
 	var buf bytes.Buffer
-	writeReport(&buf, results)
+	writeReport(&buf, nodeCount, results)
 	return buf.Bytes()
 }
 

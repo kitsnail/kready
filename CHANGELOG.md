@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- 文本报告第二行输出节点数（`节点数: N`），如实反映 kubectl 发现的节点数。节点数不作为判定项，不做期望检查。
 - 本地目录标准：`docs/design/kready-home.md`。统一放在 `KREADY_HOME`（默认 `$HOME/.kready`），子目录 `bin/ config/ logs/ reports/ snapshots/ tmp/` 为项目标准。目录 0700，文件 0600。
 - 默认写入：`check` 每次把报告写入 `reports/`（文本或 JSON，与终端一致）；`--live` 另把采集快照写入 `snapshots/<时间戳>/`，可用 `--snapshot` 复现判定。同一秒多次运行加序号，不覆盖旧文件。
 - 失败策略：目录不可用时判定前报错（退出码 2）；报告或快照写入失败只警告，不改变判定结果。
@@ -28,6 +29,8 @@
 - 控制面版本不一致或无控制面节点：仍为退出码 2。
 
 ### Fixed
+- SSH 认证改为 agent 优先、默认私钥兜底；节点已配置免密登录，不再要求 ssh-agent。host key 仍严格校验。
+- `sshd -T` 输出（约 95 行）原样保存导致 NODE-04 实际值为整段配置。现固定提取 `passwordauthentication` 一行，报告可读。
 - 工作节点 kubelet 版本为空时，VER-01 原判为 FAIL（显示 `w-2=`，易误读）。现改为 ERROR，结论异常，退出码 1，并列出缺失版本的节点。采集结果为空属于无法取得实际值，应报 ERROR。
 - 节点采集文件缺失时，原实现静默跳过该节点，结论可能误报"正常"。现以 `cluster.nodes` 为准，缺失节点报 ERROR，结论为异常。
 - 信息项（INFO）缺值时，集群级原输出空的当前值。现与节点级一致，报 ERROR。

@@ -375,3 +375,66 @@ func TestSaveReportErrorIsReturned(t *testing.T) {
 		t.Error("目标目录不存在时 saveReport 应返回错误，由调用方降级为警告")
 	}
 }
+
+// 文本报告第二行如实输出当前节点数，不与期望值比较。
+func TestTextReportShowsActualNodeCount(t *testing.T) {
+	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"))
+	if code != exitOK {
+		t.Fatalf("退出码 = %d", code)
+	}
+	lines := strings.Split(out, "\n")
+	if len(lines) < 2 || lines[1] != "节点数: 5" {
+		t.Errorf("第二行应为 节点数: 5，实际 %q", lines[1:2])
+	}
+}
+
+// 节点数只陈述事实：工作节点被移除后，节点数如实为 3，且不产生针对节点数的 FAIL/ERROR。
+// editCluster 无法删除节点，这里直接改写 cluster.json（与 TestNoWorkerNodesPassesVER01 一致）。
+func TestNodeCountIsNotJudged(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	path := filepath.Join(dir, "cluster.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var c map[string]any
+	if err := json.Unmarshal(data, &c); err != nil {
+		t.Fatal(err)
+	}
+	var kept []any
+	for _, raw := range c["nodes"].([]any) {
+		n := raw.(map[string]any)
+		if labels, ok := n["labels"].(map[string]any); ok {
+			if _, cp := labels["node-role.kubernetes.io/control-plane"]; cp {
+				kept = append(kept, raw)
+			}
+		}
+	}
+	c["nodes"] = kept
+	out, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, out, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	code, out2, _ := runArgs(t, "check", "--snapshot", dir)
+	if !strings.Contains(out2, "节点数: 3") {
+		t.Errorf("应如实输出节点数 3，实际: %q", out2)
+	}
+	// 节点数不是判定项：不得有任何 FAIL/ERROR 行引用“节点数”。
+	for _, line := range strings.Split(out2, "\n") {
+		if (strings.HasPrefix(line, "FAIL") || strings.HasPrefix(line, "ERROR")) && strings.Contains(line, "节点数") {
+			t.Errorf("节点数不应被判定: %q", line)
+		}
+	}
+	// 控制面节点合规，移除工作节点不改变结论：仍为正常、退出码 0。
+	if code != exitOK {
+		t.Errorf("退出码 = %d，期望 %d（节点数不影响判定）", code, exitOK)
+	}
+	if !strings.HasPrefix(out2, "正常\n") {
+		t.Errorf("结论应为正常，实际: %q", out2)
+	}
+}
