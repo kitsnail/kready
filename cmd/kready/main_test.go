@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // testdata 位于仓库根，测试在 cmd/kready 下运行，需回到根目录。
@@ -15,6 +16,10 @@ const testdataRoot = "../../testdata"
 
 func runArgs(t *testing.T, args ...string) (int, string, string) {
 	t.Helper()
+	// 测试不得写真实家目录：每次运行使用独立的 KREADY_HOME，除非测试自行设置。
+	if os.Getenv("KREADY_HOME") == "" {
+		t.Setenv("KREADY_HOME", t.TempDir())
+	}
 	var out, errb bytes.Buffer
 	code := run(args, &out, &errb)
 	return code, out.String(), errb.String()
@@ -301,5 +306,72 @@ func TestEmptyWorkerKubeletIsError(t *testing.T) {
 	}
 	if strings.Contains(out, `"status": "FAIL"`) && strings.Contains(out, "w-2=") {
 		t.Errorf("空版本不应判为 FAIL，实际: %s", out)
+	}
+}
+
+// 离线检查默认把报告写入 KREADY_HOME/reports/，内容与终端输出一致。
+func TestCheckSavesReportToKreadyHome(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("KREADY_HOME", home)
+	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"))
+	if code != exitOK {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitOK)
+	}
+	entries, err := os.ReadDir(filepath.Join(home, "reports"))
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("reports/ 应有 1 个报告，实际 %v（%v）", entries, err)
+	}
+	saved, err := os.ReadFile(filepath.Join(home, "reports", entries[0].Name()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(saved) != out {
+		t.Errorf("保存的报告与终端输出不一致\n保存: %q\n终端: %q", saved, out)
+	}
+	fi, _ := os.Stat(filepath.Join(home, "reports", entries[0].Name()))
+	if fi.Mode().Perm() != 0o600 {
+		t.Errorf("报告权限 = %v，期望 0600", fi.Mode().Perm())
+	}
+}
+
+// 多次运行不覆盖旧报告：每次都新增一个文件。
+func TestRepeatedRunsDoNotOverwriteReports(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("KREADY_HOME", home)
+	for i := 0; i < 3; i++ {
+		runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"))
+	}
+	entries, _ := os.ReadDir(filepath.Join(home, "reports"))
+	if len(entries) != 3 {
+		t.Errorf("3 次运行应得到 3 份报告，实际 %d", len(entries))
+	}
+}
+
+// 目录无法创建（KREADY_HOME/reports 被普通文件占用）：判定前报错，退出码 2，不输出判定。
+// 不做判定，避免用户误以为结果已存档。
+func TestUnusableHomeFailsBeforeCheck(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("KREADY_HOME", home)
+	if err := os.WriteFile(filepath.Join(home, "reports"), []byte("blocker"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	code, out, errOut := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"))
+	if code != exitTool {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitTool)
+	}
+	if out != "" {
+		t.Errorf("目录不可用时不应输出判定，实际: %q", out)
+	}
+	if errOut == "" {
+		t.Error("应说明目录不可用的原因")
+	}
+}
+
+// 报告写入失败（目录存在但无法新建文件）只影响保存，不改变判定结果。
+// 直接测试 saveReport：目标目录不存在时返回错误，调用方据此只警告。
+func TestSaveReportErrorIsReturned(t *testing.T) {
+	st := &store{root: filepath.Join(t.TempDir(), "missing")}
+	if _, err := st.saveReport(time.Now(), ".txt", []byte("x")); err == nil {
+		t.Error("目标目录不存在时 saveReport 应返回错误，由调用方降级为警告")
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/scclabs/kready/internal/collect"
 	"io"
 	"os"
+	"time"
 
 	"github.com/scclabs/kready/internal/check"
 	"github.com/scclabs/kready/internal/rules"
@@ -62,6 +63,12 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "未知输出格式: %s（支持 text、json）\n", *format)
 		return exitTool
 	}
+	st, err := openStore()
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return exitTool
+	}
+	now := time.Now()
 	var snap *snapshot.Snapshot
 	var nodes []collect.Node
 	if *live {
@@ -95,14 +102,40 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		snap = s
 	}
 	results := check.Run(pack, snap)
+
+	// 实时采集的快照默认保存，便于复现判定（snapshots/<时间戳>/）。
+	if *live {
+		if dir, err := st.saveSnapshot(now, snap); err != nil {
+			fmt.Fprintf(stderr, "警告：快照保存失败: %v\n", err)
+		} else {
+			fmt.Fprintf(stderr, "快照已保存: %s\n", dir)
+		}
+	}
+
+	// 报告：先输出到终端，再保存到 reports/（默认行为）。保存失败只警告，不改变判定结果。
+	var content []byte
+	ext := ".txt"
 	if *format == "json" {
-		if err := writeJSON(stdout, pack, results); err != nil {
+		ext = ".json"
+		b, err := renderJSON(pack, results)
+		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return exitTool
 		}
+		content = b
 	} else {
-		writeReport(stdout, results)
+		content = renderText(results)
 	}
+	if err := tee(stdout, content); err != nil {
+		fmt.Fprintln(stderr, err)
+		return exitTool
+	}
+	if path, err := st.saveReport(now, ext, content); err != nil {
+		fmt.Fprintf(stderr, "警告：报告保存失败: %v\n", err)
+	} else {
+		fmt.Fprintf(stderr, "报告已保存: %s\n", path)
+	}
+
 	for _, r := range results {
 		if r.Status == check.Fail || r.Status == check.Error {
 			return exitBad
