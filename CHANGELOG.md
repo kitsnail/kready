@@ -12,5 +12,8 @@
 ### Changed
 - 设计文档移至 `docs/design/kready-design.md`。
 - 规则草案移至 `docs/rules/2.32-draft.md`，待转换为 YAML 后删除。
+- 输出契约：结论改为"正常 / 异常"，新增 WARN 状态（不改变结论），退出码 0 为正常、不含 FAIL 与 ERROR。
+- 规则包 2.32 草案：SYS-04 改为 `mode: info`，不判定。
+- 设计文档：第七节退出码与结论按新术语更新；第十一节拆分为"已决定"与"待讨论"。
 - 旧清单归档至 `docs/archive/checklist-v0.md`。
 - `AGENTS.md` 修订：增加 A/B/C 决策分级，允许 A 类改动自动执行；禁止直接推送或合并 `main`。

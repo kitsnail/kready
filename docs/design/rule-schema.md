@@ -15,6 +15,9 @@
 | `collect` | 否 | 取数据方式，见下文。缺省表示从 API 读取 |
 | `check` | `judge` 时必填 | 判断方式，见下文 |
 | `expect` | `judge` 时必填 | 期望值，格式由 `check` 决定 |
+| `severity` | `judge` 时必填（待 B 类确认） | `error`：不符合时输出 FAIL，结论为异常；`warn`：输出 WARN，结论不变 |
+| `impact` | `judge` 时必填（待 B 类确认） | 不处理会带来什么后果，大白话，一句话 |
+| `hint` | `judge` 时必填（待 B 类确认） | 处理方式，可直接复制的命令或操作方向，标明风险等级 |
 
 ## 状态
 
