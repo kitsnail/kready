@@ -6,15 +6,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/scclabs/kready/internal/collect"
+	"github.com/kitsnail/kready/internal/collect"
 	"io"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/scclabs/kready/internal/check"
-	"github.com/scclabs/kready/internal/rules"
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/check"
+	"github.com/kitsnail/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // version 在发布时通过 -ldflags 注入。

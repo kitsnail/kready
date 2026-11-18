@@ -1,4 +1,4 @@
-module github.com/scclabs/kready
+module github.com/kitsnail/kready
 
 go 1.27.4
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/scclabs/kready/internal/collect"
-	"github.com/scclabs/kready/internal/rules"
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/collect"
+	"github.com/kitsnail/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // liveSnapshot 只通过 kubectl 取节点清单，用于选包。此时不发起 SSH 连接。

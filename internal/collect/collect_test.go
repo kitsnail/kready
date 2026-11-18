@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/scclabs/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/rules"
 )
 
 // fakeRunner 只返回预设输出，不发起任何 SSH 连接。

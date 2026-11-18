@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/scclabs/kready/internal/check"
-	"github.com/scclabs/kready/internal/home"
-	"github.com/scclabs/kready/internal/rules"
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/check"
+	"github.com/kitsnail/kready/internal/home"
+	"github.com/kitsnail/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // store 持有本次运行使用的 KREADY_HOME 目录，并保证目录结构已就绪。

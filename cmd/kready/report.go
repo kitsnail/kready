@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/scclabs/kready/internal/check"
-	"github.com/scclabs/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/check"
+	"github.com/kitsnail/kready/internal/rules"
 )
 
 // schemaVersion 是 JSON 输出的契约版本，见 docs/design/output-contract.md。

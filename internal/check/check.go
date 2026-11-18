@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/scclabs/kready/internal/rules"
-	"github.com/scclabs/kready/internal/snapshot"
+	"github.com/kitsnail/kready/internal/rules"
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // Status 是结果状态，见 docs/design/output-contract.md。
