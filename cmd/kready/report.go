@@ -9,7 +9,8 @@ import (
 )
 
 // schemaVersion 是 JSON 输出的契约版本，见 docs/design/output-contract.md。
-const schemaVersion = 1
+// 版本 2：结论新增“未能确认”，退出码 1 含义扩展为异常或未能确认（MAJOR 变更）。
+const schemaVersion = 2
 
 // report 是 JSON 输出的结构，字段与输出契约一致。
 type report struct {

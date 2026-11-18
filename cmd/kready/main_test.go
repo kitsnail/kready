@@ -59,6 +59,10 @@ func TestCheckPositiveJSON(t *testing.T) {
 			t.Errorf("缺少字段 %s", k)
 		}
 	}
+	// 锁定输出契约版本：改动结论或退出码语义时必须同步递增并更新此断言。
+	if d["schema_version"] != float64(2) {
+		t.Errorf("schema_version = %v，期望 2", d["schema_version"])
+	}
 	if d["pack"] != "2.32" || d["conclusion"] != "正常" {
 		t.Errorf("pack/conclusion 不符: %v / %v", d["pack"], d["conclusion"])
 	}
