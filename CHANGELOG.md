@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Changed
+- Agent 自主推进（D-011）：AGENTS.md 新增 REQ 确认后的 A 类授权（检查逻辑）、独立审查合并条件、澄清/自动推进/升级三条工作方式；`docs/product/README.md` 新增字段级权限。`rules/`、`testdata/` 期望值仍须人工批准。
 - CI 门禁（方案 B、C）：修改 `Makefile`、`.github/`、`.githooks/`、`rules/`、`testdata/` 的 PR 须在正文引用 `D-nnn`；修改 `internal/`、`cmd/`、`rules/` 的 PR 须同时更新 `CHANGELOG.md`。仅对 `pull_request` 事件生效。
 - PR 模板（`.github/pull_request_template.md`）：要求写明范围、门禁文件与引用的 `D-nnn`、CHANGELOG 状态与 `make check` 结果。
 - 重构（无行为变化）：删除仅做状态过滤的包装函数 `writeGroups`，统一调用 `writeGroupsOf`；修正 `writeReport` 注释错位。文本输出与退出码经全部样本比对一致。
