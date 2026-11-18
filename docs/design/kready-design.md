@@ -153,3 +153,12 @@ kready 检查结果：异常  （2 个 FAIL，1 个 WARN）  耗时 18 秒
 ## 参考
 
 - Intel Cluster Ready 概述：https://en.wikipedia.org/wiki/Intel_Cluster_Ready
+
+
+## 实时采集（v1 切片）
+
+- 入口：`kready check --live`，与 `--snapshot` 二选一。
+- 顺序：kubectl 取节点清单 → 按控制面版本选包（无适用规则则退出，不发起 SSH）→ 按规则包命令通过 SSH 只读采集 → 与快照相同的判定。
+- 节点清单只取一次，选包与采集使用同一份。
+- 集群级 `config.*` 字段目前没有实时来源，依赖它的规则报 ERROR，不凭空填值。
+- 依据：ADR 0001（白名单、root、known_hosts、超时）。

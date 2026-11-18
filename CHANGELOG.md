@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Added
+- 实时采集：`kready check --live`。kubectl 只读取节点清单（`get nodes`）并选包；选包成功后按规则包声明的命令，通过 SSH（root，ssh-agent，校验 known_hosts）只读采集节点。`--snapshot` 与 `--live` 二选一。
+- 采集白名单：`internal/collect` 将命令 ID 映射为固定只读命令（4 条，与规则包一致）。执行层只接收 ID，拒绝未知 ID。
+- 依赖：`golang.org/x/crypto`。理由：标准库无 SSH 客户端，ADR 0001 要求 SSH 采集且校验 known_hosts。
 - 原型验证记录：`docs/design/prototype-verification.md`，列出 10 项已验证行为（选包、基线、ERROR、JSON、退出码）。
 - 检查切片（2.32）：规则包 `rules/2.32/rules.yaml`（8 条判定；NODE-05、SYS-04 为信息项）；`kready check --snapshot <目录>` 离线读取快照，输出正常/异常，异常时列出实际值与期望值。
 - 快照测试：`testdata/positive/2.32`（全部通过）与 `testdata/negative/2.32/<RULE-ID>/`（每条判定规则一个负例）。测试只使用快照。

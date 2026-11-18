@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/scclabs/kready/internal/collect"
 	"io"
 	"os"
 
@@ -48,28 +49,50 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	dir := fs.String("snapshot", "", "快照目录（离线，只读）")
+	live := fs.Bool("live", false, "实时采集：kubectl 取节点清单，SSH（root，ssh-agent）只读采集节点")
 	format := fs.String("format", "text", "输出格式：text 或 json")
 	if err := fs.Parse(args); err != nil {
 		return exitTool
 	}
-	if *dir == "" {
-		fmt.Fprintln(stderr, "缺少 --snapshot")
+	if (*dir == "") == !*live {
+		fmt.Fprintln(stderr, "请指定 --snapshot <目录> 或 --live（二选一）")
 		return exitTool
 	}
 	if *format != "text" && *format != "json" {
 		fmt.Fprintf(stderr, "未知输出格式: %s（支持 text、json）\n", *format)
 		return exitTool
 	}
-	snap, err := snapshot.Load(*dir)
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return exitTool
+	var snap *snapshot.Snapshot
+	var nodes []collect.Node
+	if *live {
+		s, ns, err := liveSnapshot()
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return exitTool
+		}
+		snap, nodes = s, ns
+	} else {
+		s, err := snapshot.Load(*dir)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return exitTool
+		}
+		snap = s
 	}
 	pack, err := rules.Select(check.ControlPlaneKubelet(snap))
 	if err != nil {
 		// 无适用规则：不判定，退出码 2，见 output-contract.md。
 		fmt.Fprintln(stderr, err)
 		return exitTool
+	}
+	if *live {
+		// 实时模式：按所选规则包补采节点命令（选包后才知道需要哪些命令）。
+		s, err := collectNodes(snap, nodes, pack)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return exitTool
+		}
+		snap = s
 	}
 	results := check.Run(pack, snap)
 	if *format == "json" {
