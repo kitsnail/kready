@@ -93,18 +93,31 @@ func TestNoApplicablePackExitsTwo(t *testing.T) {
 	}
 }
 
-// 混布版本：退出码 2，提示版本不一致。
-func TestMixedKubeletVersionsExitsTwo(t *testing.T) {
+// 控制面版本不一致：无法确定基线，退出码 2。
+func TestControlPlaneMixedVersionsExitsTwo(t *testing.T) {
 	dir := t.TempDir()
 	copyPositive(t, dir)
-	rewriteKubelet(t, dir, "v1.36.4")
-	rewriteFirstNodeKubelet(t, dir, "v1.36.3")
+	rewriteControlPlaneKubelet(t, dir, "cp-1", "v1.36.3")
 	code, _, errOut := runArgs(t, "check", "--snapshot", dir)
 	if code != exitTool {
 		t.Fatalf("退出码 = %d，期望 %d", code, exitTool)
 	}
-	if !strings.Contains(errOut, "版本不一致") {
-		t.Errorf("应提示版本不一致，实际: %q", errOut)
+	if !strings.Contains(errOut, "控制面") {
+		t.Errorf("应提示控制面版本不一致，实际: %q", errOut)
+	}
+}
+
+// 工作节点版本与基线不一致：VER-01 FAIL，退出码 1，不是无适用规则。
+func TestWorkerMixedVersionFailsVER01(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	rewriteWorkerKubelet(t, dir, "w-1", "v1.36.3")
+	code, out, _ := runArgs(t, "check", "--snapshot", dir)
+	if code != exitBad {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitBad)
+	}
+	if !strings.Contains(out, "FAIL  VER-01") {
+		t.Errorf("应对 VER-01 报 FAIL，实际: %s", out)
 	}
 }
 
@@ -135,11 +148,27 @@ func rewriteKubelet(t *testing.T, dir, version string) {
 	})
 }
 
-// rewriteFirstNodeKubelet 只改第一个节点的 kubelet 版本，用于构造混布。
-func rewriteFirstNodeKubelet(t *testing.T, dir, version string) {
+// rewriteControlPlaneKubelet 只改指定控制面节点的 kubelet 版本。
+func rewriteControlPlaneKubelet(t *testing.T, dir, name, version string) {
 	t.Helper()
 	editCluster(t, dir, func(nodes []map[string]any) {
-		nodes[0]["kubelet"] = version
+		for _, n := range nodes {
+			if n["name"] == name {
+				n["kubelet"] = version
+			}
+		}
+	})
+}
+
+// rewriteWorkerKubelet 只改指定工作节点的 kubelet 版本。
+func rewriteWorkerKubelet(t *testing.T, dir, name, version string) {
+	t.Helper()
+	editCluster(t, dir, func(nodes []map[string]any) {
+		for _, n := range nodes {
+			if n["name"] == name {
+				n["kubelet"] = version
+			}
+		}
 	})
 }
 
@@ -188,4 +217,18 @@ func copyTree(src, dst string) error {
 		}
 		return os.WriteFile(target, data, 0o644)
 	})
+}
+
+// VER-01 FAIL 必须列出不符合基线的工作节点名，便于直接定位。
+func TestVER01FailNamesNonconformingWorker(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	rewriteWorkerKubelet(t, dir, "w-1", "v1.36.3")
+	_, out, _ := runArgs(t, "check", "--snapshot", dir)
+	if !strings.Contains(out, "w-1=v1.36.3") {
+		t.Errorf("VER-01 应列出不符合基线的节点 w-1=v1.36.3，实际: %s", out)
+	}
+	if strings.Contains(out, "w-2=") {
+		t.Errorf("符合基线的 w-2 不应被列出，实际: %s", out)
+	}
 }

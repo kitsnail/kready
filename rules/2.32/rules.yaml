@@ -2,22 +2,21 @@
 # 规则 schema 见 docs/design/rule-schema.md。运行时只读取本文件，不读取部署源文件。
 # 变更属 B 类，需人工确认。
 pack: "2.32"
-rules_rev: 1
-# 适用的 kubelet 版本（精确匹配）。观测版本不在此列 → 无适用规则。
+rules_rev: 2
+# 适用的 kubelet 版本（精确匹配）。以控制面节点版本为基线；不在此列 → 无适用规则。
 applies_to:
   kubelet:
     - "v1.36.4"
 rules:
   - id: VER-01
-    title: 所有节点 kubelet 版本
+    title: 工作节点 kubelet 版本与控制面一致
     status: active
     mode: judge
     scope: cluster
-    source: 固定组合（kubespray 2.32.0 默认 kube_version，roles/kubespray_defaults/vars/main/main.yml 与 defaults/main/main.yml）
-    field: kubelet_versions
-    check: equals
+    source: 基线为控制面节点 kubelet 版本（选包已保证其精确匹配 applies_to，见 output-contract.md）；工作节点与之比较
+    check: equal_baseline
     expect:
-      value: "v1.36.4"
+      baseline: control-plane
 
   - id: VER-04
     title: etcd 版本

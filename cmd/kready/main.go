@@ -65,10 +65,10 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return exitTool
 	}
-	pack, err := rules.Select(check.KubeletVersions(snap))
+	pack, err := rules.Select(check.ControlPlaneKubelet(snap))
 	if err != nil {
 		// 无适用规则：不判定，退出码 2，见 output-contract.md。
-		fmt.Fprintln(stderr, noPackMessage(check.KubeletVersions(snap), supportedVersions()))
+		fmt.Fprintln(stderr, err)
 		return exitTool
 	}
 	results := check.Run(pack, snap)
@@ -104,24 +104,4 @@ func writeReport(w io.Writer, results []check.Result) {
 			fmt.Fprintf(w, "INFO  %s  %s  当前值=%s\n", r.ID, r.Target, r.Actual)
 		}
 	}
-}
-
-// supportedVersions 列出所有规则包支持的 kubelet 版本，用于无适用规则时的提示。
-func supportedVersions() []string {
-	var out []string
-	for _, pack := range rules.Packs() {
-		p, err := rules.Load(pack)
-		if err == nil {
-			out = append(out, p.AppliesTo.Kubelet...)
-		}
-	}
-	return out
-}
-
-// noPackMessage 说明无适用规则的原因：节点 kubelet 版本不一致，或版本不在支持范围内。
-func noPackMessage(observed, supported []string) string {
-	if len(observed) > 1 {
-		return fmt.Sprintf("无适用规则: 节点 kubelet 版本不一致 %v，请先统一版本", observed)
-	}
-	return fmt.Sprintf("无适用规则: kubelet 版本 %v 不在支持范围 %v 内", observed, supported)
 }

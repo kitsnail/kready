@@ -69,18 +69,17 @@ func (p *Pack) Active() []Rule {
 	return out
 }
 
-// Select 按观测到的 kubelet 版本选择规则包。
-// 所有节点版本必须一致且精确匹配某个规则包的 applies_to，否则返回 ErrNoPack。
-func Select(kubeletVersions []string) (*Pack, error) {
-	if len(kubeletVersions) == 0 {
-		return nil, ErrNoPack
+// Select 以控制面节点的 kubelet 版本为基线选择规则包。
+// 控制面版本必须唯一且精确匹配某个规则包的 applies_to，否则返回 ErrNoPack，附原因。
+func Select(controlPlane []string) (*Pack, error) {
+	if len(controlPlane) == 0 {
+		return nil, fmt.Errorf("%w: 未找到控制面节点，无法确定基线版本", ErrNoPack)
 	}
-	version := kubeletVersions[0]
-	for _, v := range kubeletVersions[1:] {
-		if v != version {
-			return nil, ErrNoPack
-		}
+	if len(controlPlane) > 1 {
+		return nil, fmt.Errorf("%w: 控制面节点 kubelet 版本不一致 %v，请先统一", ErrNoPack, controlPlane)
 	}
+	version := controlPlane[0]
+	var supported []string
 	for _, pack := range Packs() {
 		p, err := Load(pack)
 		if err != nil {
@@ -90,9 +89,10 @@ func Select(kubeletVersions []string) (*Pack, error) {
 			if v == version {
 				return p, nil
 			}
+			supported = append(supported, v)
 		}
 	}
-	return nil, ErrNoPack
+	return nil, fmt.Errorf("%w: 控制面 kubelet 版本 %s 不在支持范围 %v 内", ErrNoPack, version, supported)
 }
 
 // ErrNoPack 表示无适用规则。

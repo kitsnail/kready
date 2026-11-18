@@ -39,6 +39,10 @@ func Run(p *rules.Pack, s *snapshot.Snapshot) []Result {
 	for _, r := range p.Active() {
 		switch r.Scope {
 		case "cluster":
+			if r.Check == "equal_baseline" {
+				out = append(out, runBaseline(r, s))
+				continue
+			}
 			out = append(out, runCluster(r, s))
 		case "node":
 			out = append(out, runNodes(r, s)...)
@@ -76,8 +80,6 @@ func runCluster(r rules.Rule, s *snapshot.Snapshot) Result {
 //	count_role     按 expect.role 计数节点数
 func clusterValue(r rules.Rule, s *snapshot.Snapshot) string {
 	switch {
-	case r.Field == "kubelet_versions":
-		return kubeletVersions(s)
 	case r.Field == "count_role":
 		return strconv.Itoa(countNodes(s, r.Expect["role"]))
 	case strings.HasPrefix(r.Field, "config."):
@@ -108,24 +110,6 @@ func runNodes(r rules.Rule, s *snapshot.Snapshot) []Result {
 		out = append(out, res)
 	}
 	return out
-}
-
-// KubeletVersions 返回所有节点的 kubelet 版本（去重，保持出现顺序）。
-func KubeletVersions(s *snapshot.Snapshot) []string {
-	seen := map[string]bool{}
-	var vals []string
-	for _, n := range s.Cluster.Nodes {
-		if !seen[n.Kubelet] {
-			seen[n.Kubelet] = true
-			vals = append(vals, n.Kubelet)
-		}
-	}
-	return vals
-}
-
-// kubeletVersions 返回去重后的 kubelet 版本，逗号连接，用于 VER-01 的实际值展示。
-func kubeletVersions(s *snapshot.Snapshot) string {
-	return strings.Join(KubeletVersions(s), ",")
 }
 
 func countNodes(s *snapshot.Snapshot, role string) int {
@@ -176,4 +160,73 @@ func Conclusion(rs []Result) string {
 // String 便于调试输出。
 func (r Result) String() string {
 	return fmt.Sprintf("%s %s %s actual=%q expect=%q", r.ID, r.Status, r.Target, r.Actual, r.Expect)
+}
+
+const controlPlaneLabel = "node-role.kubernetes.io/control-plane"
+
+func isControlPlane(n snapshot.Node) bool {
+	_, ok := n.Labels[controlPlaneLabel]
+	return ok
+}
+
+// ControlPlaneKubelet 返回控制面节点的 kubelet 版本（去重，排序）。选包以此为基线。
+func ControlPlaneKubelet(s *snapshot.Snapshot) []string {
+	return distinctKubelet(s, true)
+}
+
+// WorkerKubelet 返回非控制面节点的 kubelet 版本（去重，排序）。
+func WorkerKubelet(s *snapshot.Snapshot) []string {
+	return distinctKubelet(s, false)
+}
+
+func distinctKubelet(s *snapshot.Snapshot, controlPlane bool) []string {
+	seen := map[string]bool{}
+	var vals []string
+	for _, n := range s.Cluster.Nodes {
+		if isControlPlane(n) != controlPlane {
+			continue
+		}
+		if !seen[n.Kubelet] {
+			seen[n.Kubelet] = true
+			vals = append(vals, n.Kubelet)
+		}
+	}
+	sort.Strings(vals)
+	return vals
+}
+
+// runBaseline 判定工作节点 kubelet 版本与控制面基线一致。
+// 基线取控制面版本；无工作节点时视为通过。
+func runBaseline(r rules.Rule, s *snapshot.Snapshot) Result {
+	res := Result{ID: r.ID, Target: "cluster"}
+	if r.Expect["baseline"] != "control-plane" {
+		res.Status, res.Error = Error, "不支持的基线: "+r.Expect["baseline"]
+		return res
+	}
+	cp := ControlPlaneKubelet(s)
+	if len(cp) != 1 {
+		res.Status, res.Error = Error, "控制面节点版本缺失或不一致，无法确定基线"
+		return res
+	}
+	res.Expect = cp[0]
+	workers := WorkerKubelet(s)
+	if len(workers) == 0 {
+		res.Actual, res.Status = "无工作节点", Pass
+		return res
+	}
+	// 列出与基线不符的工作节点，便于直接定位。
+	var bad []string
+	for _, n := range s.Cluster.Nodes {
+		if !isControlPlane(n) && n.Kubelet != cp[0] {
+			bad = append(bad, n.Name+"="+n.Kubelet)
+		}
+	}
+	if len(bad) == 0 {
+		res.Actual, res.Status = cp[0], Pass
+		return res
+	}
+	sort.Strings(bad)
+	res.Actual = strings.Join(bad, ",")
+	res.Status = Fail
+	return res
 }
