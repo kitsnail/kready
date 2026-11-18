@@ -1,0 +1,21 @@
+name: release-please
+
+# 只创建或更新 Release PR，不自动打 tag、不发布。
+# 合并 Release PR 后，正式 tag 由人确认并执行（见 docs/design/versioning.md）。
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
