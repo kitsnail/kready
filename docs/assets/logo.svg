@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">kready logo</title>
+  <!-- 六边形：Kubernetes 风格蓝色 -->
+  <path d="M256 40 L440 146 L440 366 L256 472 L72 366 L72 146 Z" fill="#326CE5"/>
+  <!-- 白色对勾：就绪检查 -->
+  <path d="M164 262 L228 326 L356 190" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 右下角绿色就绪指示点 -->
+  <circle cx="400" cy="392" r="48" fill="#2EB67D" stroke="#FFFFFF" stroke-width="16"/>
+</svg>
