@@ -3,11 +3,12 @@
 
 GO ?= go
 PKG := ./...
-GO_REQUIRED := 1.27.4
+# go.mod 是 Go 版本的唯一来源；CI 与 Makefile 均从此读取，不再手写。
+GO_REQUIRED := $(shell awk '$$1=="go"{print $$2}' go.mod)
 export GOCACHE ?= $(CURDIR)/.gocache
 GO_VERSION := $(shell $(GO) env GOVERSION | sed 's/^go//')
 
-.PHONY: fmt lint test check build clean goversion
+.PHONY: fmt lint test check build clean goversion hooks
 
 goversion:
 	@if [ "$(GO_VERSION)" != "$(GO_REQUIRED)" ]; then \
@@ -38,7 +39,11 @@ LDFLAGS := -X main.version=$(VERSION)
 build: goversion
 	$(GO) build -ldflags "$(LDFLAGS)" -o bin/kready ./cmd/kready
 
-check: lint test build
+# 启用仓库自带的 commit-msg 钩子（.githooks/），每次 make check 时确保已生效。
+hooks:
+	@git config core.hooksPath .githooks
+
+check: hooks lint test build
 
 clean:
 	rm -rf .gocache

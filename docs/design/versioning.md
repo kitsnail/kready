@@ -39,7 +39,7 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 
 ## 五、提交规范
 
-- Conventional Commits：`feat`、`fix`、`docs`、`chore`、`refactor`、`test`。
+- Conventional Commits：`feat`、`fix`、`docs`、`chore`、`refactor`、`test`、`ci`、`build`。提交首行由 `.githooks/commit-msg` 强制校验，不符合的提交会被拒绝。启用方式：`make check` 会自动执行 `make hooks`（`git config core.hooksPath .githooks`）。
 - 规则改动使用 scope `rules`，例如 `feat(rules): add CP-09`。
 - 破坏性变更在脚注中写 `BREAKING CHANGE:`。
 
@@ -84,7 +84,7 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 
 以下改动涉及门禁文件，尚未实施：
 
-1. `commit-msg` 钩子：拒绝不符合 Conventional Commits 的提交。
+1. ~~`commit-msg` 钩子：拒绝不符合 Conventional Commits 的提交。~~ 已实施（`.githooks/commit-msg`，由 `make hooks` 启用）。
 2. CI：校验 tag 与 `.release-please-manifest.json`、CHANGELOG 一致。
 
 已完成或已废弃，不再列入待办：`Makefile` 版本注入（已由 `git describe` + ldflags 实现）；`scripts/next-version`（已由 release-please 取代）。
