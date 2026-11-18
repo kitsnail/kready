@@ -43,7 +43,7 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 - 规则改动使用 scope `rules`，例如 `feat(rules): add CP-09`。
 - 破坏性变更在脚注中写 `BREAKING CHANGE:`。
 
-## 六、版本计算（A 类，由脚本完成）
+## 六、版本计算（A 类，由 release-please 完成）
 
 自上一个 tag 起，按提交类型计算下一版本：
 
@@ -56,7 +56,7 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 版本由 release-please 计算，不手写，不自定义脚本。
 
 - 工具：release-please（清单模式），配置见 `release-please-config.json`，当前版本见 `.release-please-manifest.json`。
-- 流程：推送到 `main` 后，工作流创建或更新 Release PR。合并 Release PR 后，由人确认并打正式 tag。
+- 流程：推送到 `main` 后，工作流创建或更新 Release PR。合并 Release PR 后，由 Agent 打正式 tag（权责见 AGENTS.md「提交与版本」）；人负责验收版本号与发布内容。
 - 凭据：工作流使用内置 `GITHUB_TOKEN`，依赖组织设置 `can_approve_pull_request_reviews` 为 `true`（Actions 才可建 PR）。**若该开关被关闭，Release PR 将无法创建**，届时需改用 PAT 或 GitHub App token。不使用长期 PAT，避免凭据过期导致工作流静默失败。
 - 0.x 规则：`bump-minor-pre-major` 为真，即破坏性变更升 MINOR，`feat`、`fix` 升 PATCH。**这是项目选择，不是 SemVer 或社区的强制规定**；SemVer 只规定 0.x 阶段"可以随时变化"。
 - 1.0 之后：破坏性变更升 MAJOR，`feat` 升 MINOR，`fix` 升 PATCH。
@@ -80,7 +80,7 @@ kready 版本不跟随 kubespray 版本。新增 kubespray 版本通过新增规
 
 以下改动涉及门禁文件，尚未实施：
 
-1. `Makefile`：通过构建参数注入版本号。
-2. `scripts/next-version`：按提交计算版本。
-3. `commit-msg` 钩子：拒绝不符合 Conventional Commits 的提交。
-4. CI：校验版本号、tag 与 CHANGELOG 一致。
+1. `commit-msg` 钩子：拒绝不符合 Conventional Commits 的提交。
+2. CI：校验 tag 与 `.release-please-manifest.json`、CHANGELOG 一致。
+
+已完成或已废弃，不再列入待办：`Makefile` 版本注入（已由 `git describe` + ldflags 实现）；`scripts/next-version`（已由 release-please 取代）。

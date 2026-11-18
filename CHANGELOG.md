@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Changed
+- 流程文档整理：`docs/design/versioning.md` 的发布权责改为与 AGENTS.md 一致（正式 tag 由 Agent 执行，人负责验收）；清理已完成的待办项。
+- 新增 `docs/product/README.md`：产品输入的目录结构、需求模板与与开发流程的关系（由人维护）。
 - release-please 改用内置 `GITHUB_TOKEN`，移除长期 PAT（原 `RELEASE_PLEASE_TOKEN` 已过期，导致工作流 `Bad credentials` 静默失败）。配套打开组织设置 `can_approve_pull_request_reviews`，Actions 因而可创建 PR。`docs/design/versioning.md` 补充凭据要求。
 - 分支生命周期：功能分支合并后即删除，仓库开启「合并后自动删除源分支」；清理已合并分支 5 个。规则见 `AGENTS.md` 的「分支」段。
 - 项目 logo：`docs/assets/logo.svg`。实心蓝六边形配白色对勾与右上角绿色状态点，六边形环留缺口容纳状态点。无文字，缩放后仍可辨认。
@@ -37,8 +39,6 @@
 - 决策分级与禁止事项：`AGENTS.md`。
 - ADR 0001：节点级检查通过 SSH 只读采集（root 账号，节点清单由 kubectl 获取），见 `docs/decisions/0001-node-collection-via-ssh.md`。
 - 设计草案 v1：规则 schema（`docs/design/rule-schema.md`）、输出契约（`docs/design/output-contract.md`）、快照格式（`docs/design/snapshot-format.md`）。规则不读取部署源文件，无法判定的项输出 INFO。
-
-### Changed
 - **破坏性变更**：JSON `schema_version` 由 2 递增为 3。`summary` 改名为 `rules`（按规则计数，每条规则计一次，取最严重状态，给决策用）；按结果的计数改名为 `results_by_status`（按节点结果条数，给脚本对账用）。
 - 【工具未覆盖】同一原因的项合并为一行，并列出各项名称。
 - 退出码：`1` 表示结论为异常或未能确认。工具未覆盖不再使退出码为 1。**破坏性变更**：JSON `schema_version` 由 1 递增为 2。
