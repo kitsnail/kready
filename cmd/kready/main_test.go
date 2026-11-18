@@ -521,3 +521,32 @@ func TestCollectFailureGivesUnconfirmedAndExitOne(t *testing.T) {
 		t.Errorf("应单独成块并说明处理方式，实际: %s", out)
 	}
 }
+
+// 同一原因的工具未覆盖项合并为一行，不逐条占块。
+func TestToolGapSameReasonMergedToOneLine(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	path := filepath.Join(dir, "cluster.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var c map[string]any
+	if err := json.Unmarshal(data, &c); err != nil {
+		t.Fatal(err)
+	}
+	delete(c, "config")
+	out2, _ := json.MarshalIndent(c, "", "  ")
+	if err := os.WriteFile(path, out2, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, out, _ := runArgs(t, "check", "--snapshot", dir)
+	if n := strings.Count(out, "本模式不采集"); n != 1 {
+		t.Errorf("同一原因应合并为一行，实际出现 %d 次: %s", n, out)
+	}
+	for _, name := range []string{"etcd 版本（VER-04）", "kube-proxy 模式（VER-06）", "etcd 后端配额（CP-08）", "metrics-server 副本数（SYS-04）"} {
+		if !strings.Contains(out, name) {
+			t.Errorf("合并后应保留 %s，实际: %s", name, out)
+		}
+	}
+}

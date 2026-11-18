@@ -29,6 +29,7 @@
 - 设计草案 v1：规则 schema（`docs/design/rule-schema.md`）、输出契约（`docs/design/output-contract.md`）、快照格式（`docs/design/snapshot-format.md`）。规则不读取部署源文件，无法判定的项输出 INFO。
 
 ### Changed
+- 【工具未覆盖】同一原因的项合并为一行，并列出各项名称。
 - 退出码：`1` 表示结论为异常或未能确认。工具未覆盖不再使退出码为 1。（改变结论含义，`schema_version` 是否递增待确认）
 - 去掉“（待补充）”空占位：规则未填写影响与处理时不显示。
 - 规则包选择与 VER-01 语义（B 类，已确认）：选包以控制面节点 kubelet 版本为基线；VER-01 改为检查工作节点版本与基线一致（新检查方式 `equal_baseline`）。`rules_rev` 由 1 升至 2。

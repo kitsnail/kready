@@ -176,7 +176,18 @@ func writeBySource(w io.Writer, results []check.Result, source check.Source, sec
 		return
 	}
 	fmt.Fprintf(w, "\n%s %s\n", section, note)
-	writeGroupsOf(w, subset, check.Error, section)
+	// 同一原因的项合并为一行，避免逐条占块；原因不同则分别列出。
+	var reasons []string
+	byReason := map[string][]string{}
+	for _, r := range subset {
+		if _, ok := byReason[r.Error]; !ok {
+			reasons = append(reasons, r.Error)
+		}
+		byReason[r.Error] = append(byReason[r.Error], label(r))
+	}
+	for _, reason := range reasons {
+		fmt.Fprintf(w, "    %s\n        原因: %s\n", strings.Join(byReason[reason], "、"), reason)
+	}
 }
 
 // writeGroups 按规则分组输出同一状态的结果：每条规则一个标题，下面逐行列出各目标。
