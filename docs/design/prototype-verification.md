@@ -18,7 +18,7 @@
 | 9 | 工作节点版本带首尾空白但一致 | 0 | 正常（空白已规范化，不误判） |
 | 10 | 仅控制面，无工作节点 | 0 | 正常；VER-01 通过，实际值"无工作节点" |
 
-另：`--format json` 输出 `schema_version` 1、`pack` 2.32、`rules_rev` 2、`conclusion`、`summary` 六个计数，与输出契约一致。未知格式（如 `xml`）退出码 2。
+另：`--format json` 输出 `schema_version` 3、`pack` 2.32、`rules_rev` 2、`conclusion`、`rules` 与 `results_by_status` 两组计数，与输出契约一致。未知格式（如 `xml`）退出码 2。
 
 ## 二、退出码对应
 

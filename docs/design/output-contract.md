@@ -58,17 +58,21 @@ ERROR 结果带 `source` 字段，说明其性质，决定它是否影响结论�
 
 ## JSON 结构
 
-用 `--format json` 输出。`summary` 六个计数始终存在，未出现的状态为 0。
+用 `--format json` 输出。两组计数，各六个键（`pass`、`fail`、`warn`、`error`、`info`、`skip`），未出现的为 0：
+
+- `rules`：**按规则计数**，每条规则计一次。同一规则的多个节点结果取最严重状态，优先级与结论一致：FAIL > ERROR（collect）> ERROR（tool-gap）> WARN > INFO > PASS。给决策用，回答“有几件事需要处理”。
+- `results_by_status`：**按结果条数计数**，每个节点的每条结果计一次。给脚本对账 `results` 用。
 
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "kready_version": "0.1.0",
   "pack": "2.32",
   "rules_rev": 2,
   "conclusion": "正常",
-  "summary": { "pass": 0, "fail": 0, "warn": 0, "error": 0, "info": 0, "skip": 0 },
+  "rules": { "pass": 0, "fail": 0, "warn": 0, "error": 0, "info": 0, "skip": 0 },
+  "results_by_status": { "pass": 0, "fail": 0, "warn": 0, "error": 0, "info": 0, "skip": 0 },
   "results": [
     {
       "id": "NODE-02",
@@ -113,7 +117,9 @@ ERROR 结果带 `source` 字段，说明其性质，决定它是否影响结论�
 - 新增可选字段：`schema_version` 不变。JSON 结果新增 `title` 字段（可选），属于此类。
 - 人类可读输出的行格式可以调整，不属于契约字段；脚本应读取 JSON。
 - 删除、重命名字段，或改变状态与退出码含义：递增 `schema_version`，按 MAJOR 处理。
-- 版本 2：结论新增取值“未能确认”，退出码 1 的含义扩展为“异常或未能确认”。按上条规则判为破坏性变更，`schema_version` 由 1 递增为 2。
+- 版本 2：结论新增取值“未能确认”，退出码 1 的含义扩展为“异常或未能确认”。按上条规则判为破坏性变更。
+- 版本 3：`summary` 改名为 `rules`（按规则计数），按结果的计数改名为 `results_by_status`。字段名改变，判为破坏性变更。
 - 版本历史：
   - 1：结论为正常/异常，ERROR 一律计为异常。
   - 2：结论为正常/异常/未能确认，ERROR 带 `source`（collect / tool-gap），tool-gap 不影响结论与退出码。
+  - 3：计数拆为 `rules`（按规则，决策用）与 `results_by_status`（按结果，对账用）。

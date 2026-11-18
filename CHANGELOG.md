@@ -29,6 +29,7 @@
 - 设计草案 v1：规则 schema（`docs/design/rule-schema.md`）、输出契约（`docs/design/output-contract.md`）、快照格式（`docs/design/snapshot-format.md`）。规则不读取部署源文件，无法判定的项输出 INFO。
 
 ### Changed
+- **破坏性变更**：JSON `schema_version` 由 2 递增为 3。`summary` 改名为 `rules`（按规则计数，每条规则计一次，取最严重状态，给决策用）；按结果的计数改名为 `results_by_status`（按节点结果条数，给脚本对账用）。
 - 【工具未覆盖】同一原因的项合并为一行，并列出各项名称。
 - 退出码：`1` 表示结论为异常或未能确认。工具未覆盖不再使退出码为 1。**破坏性变更**：JSON `schema_version` 由 1 递增为 2。
 - 去掉“（待补充）”空占位：规则未填写影响与处理时不显示。
