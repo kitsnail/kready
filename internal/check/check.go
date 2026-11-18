@@ -214,6 +214,18 @@ func runBaseline(r rules.Rule, s *snapshot.Snapshot) Result {
 		res.Actual, res.Status = "无工作节点", Pass
 		return res
 	}
+	// 工作节点缺少 kubelet 版本说明采集不完整，报 ERROR，不判为版本不符。
+	var missing []string
+	for _, n := range s.Cluster.Nodes {
+		if !isControlPlane(n) && n.Kubelet == "" {
+			missing = append(missing, n.Name)
+		}
+	}
+	if len(missing) > 0 {
+		sort.Strings(missing)
+		res.Status, res.Error = Error, "工作节点缺少 kubelet 版本: "+strings.Join(missing, ",")
+		return res
+	}
 	// 列出与基线不符的工作节点，便于直接定位。
 	var bad []string
 	for _, n := range s.Cluster.Nodes {

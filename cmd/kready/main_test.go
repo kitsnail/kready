@@ -286,3 +286,20 @@ func TestPaddedWorkerVersionMatchesBaseline(t *testing.T) {
 		t.Fatalf("退出码 = %d，期望 %d（空白不应导致 FAIL）", code, exitOK)
 	}
 }
+
+// 工作节点 kubelet 版本为空：VER-01 报 ERROR，结论异常，退出码 1，且不判为版本不符。
+func TestEmptyWorkerKubeletIsError(t *testing.T) {
+	dir := t.TempDir()
+	copyPositive(t, dir)
+	rewriteWorkerKubelet(t, dir, "w-2", "")
+	code, out, _ := runArgs(t, "check", "--snapshot", dir, "--format", "json")
+	if code != exitBad {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitBad)
+	}
+	if !strings.Contains(out, `"status": "ERROR"`) || !strings.Contains(out, "w-2") {
+		t.Errorf("应对 w-2 报 ERROR，实际: %s", out)
+	}
+	if strings.Contains(out, `"status": "FAIL"`) && strings.Contains(out, "w-2=") {
+		t.Errorf("空版本不应判为 FAIL，实际: %s", out)
+	}
+}
