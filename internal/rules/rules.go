@@ -101,7 +101,7 @@ func Select(controlPlane []string) (*Pack, error) {
 // ErrNoPack 表示无适用规则。
 var ErrNoPack = errors.New("无适用规则")
 
-// Packs 列出内嵌的规则包标识。当前仅 2.32。
+// Packs 列出内嵌的规则包标识。2.32 按 kubelet 版本选包；gpu 仅按 --pack 显式指定（D-012）。
 func Packs() []string {
-	return []string{"2.32"}
+	return []string{"2.32", "gpu"}
 }

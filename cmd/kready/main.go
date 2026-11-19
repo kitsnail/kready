@@ -53,6 +53,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 	dir := fs.String("snapshot", "", "快照目录（离线，只读）")
 	live := fs.Bool("live", false, "实时采集：kubectl 取节点清单，SSH（root，ssh-agent）只读采集节点")
 	format := fs.String("format", "text", "输出格式：text 或 json")
+	packName := fs.String("pack", "", "显式指定规则包（如 gpu）；缺省时按控制面 kubelet 版本选包（D-012）")
 	if err := fs.Parse(args); err != nil {
 		return exitTool
 	}
@@ -87,7 +88,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		}
 		snap = s
 	}
-	pack, err := rules.Select(check.ControlPlaneKubelet(snap))
+	pack, err := selectPack(*packName, snap)
 	if err != nil {
 		// 无适用规则：不判定，退出码 2，见 output-contract.md。
 		fmt.Fprintln(stderr, err)
@@ -142,6 +143,14 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		return exitBad
 	}
 	return exitOK
+}
+
+// selectPack 显式指定规则包时直接加载（D-012），否则按控制面 kubelet 版本选包。
+func selectPack(name string, snap *snapshot.Snapshot) (*rules.Pack, error) {
+	if name == "" {
+		return rules.Select(check.ControlPlaneKubelet(snap))
+	}
+	return rules.Load(name)
 }
 
 // label 返回结果的显示名：有标题时为"标题（ID）"，否则只显示 ID。

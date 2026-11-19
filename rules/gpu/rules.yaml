@@ -1,0 +1,8 @@
+# GPU 检测规则包（D-012）。独立于 kubespray 2.32，仅 `kready check --pack gpu` 显式运行。
+# 本文件目前只含头部，不含任何规则。规则条目的期望值须人工逐条批准（AGENTS.md 门禁）。
+pack: "gpu"
+rules_rev: 1
+# GPU 包不做 kubelet 选包，applies_to 留空，选包走 --pack gpu。
+applies_to:
+  kubelet: []
+rules: []
