@@ -111,20 +111,28 @@
 ### D-012（草案）GPU 检测规则包与取数方式（日期：确认时填写）
 
 - 决策：
-  1. 新增独立规则包 `rules/gpu/`，与 `rules/2.32/` 解耦，不使用 `applies_to.kubelet` 选包；选包依据由 GPU 规则包自身声明（待实现时确定，例如按 GPU Operator 存在与否）。
-  2. 取数方式：集群级数据经 Kubernetes API 只读获取（`get` / `list`）；节点硬件信息经 SSH 只读采集（允许，依据 D-006 的同一机制）。
-  3. 节点硬件信息的采集命令必须在 `internal/collect/whitelist.go` 中注册为固定只读命令 ID，规则不得写 shell 命令。新增命令属 B 类，需随本决策一并确认。
-  4. 检查结果按 `nvidia.com/gpu.product` 机型分组输出。
-  5. 版本类检查（REQ-003）不在本决策范围内。
-- 原因：GPU 检测与 kubespray 2.32 的部署版本无直接关系；独立规则包避免与 2.32 的基线耦合。
-- 影响：`rules/gpu/`（新增，门禁文件，期望值逐条需人确认）；`internal/collect/whitelist.go`（新增命令，门禁相关）；`internal/check`（输出分组、两包的运行入口）；REQ-001、REQ-002。
-- 依据：人确认 REQ-001、REQ-002 的范围与答复（本次会话）；人确认"允许通过 SSH 读取节点硬件信息"（本次会话）。
+  1. 新增独立规则包 `rules/gpu/`，与 `rules/2.32/` 解耦，不使用 `applies_to.kubelet` 选包。
+  2. 运行入口：新增 `kready check --pack gpu`，仅显式指定时运行。`kready check` 默认行为（只跑 2.32）不变。不做自动探测。
+  3. 取数方式：
+     - 集群级数据经 Kubernetes API 只读获取（`get` / `list`）。
+     - 节点硬件信息经 SSH 只读采集（依据 D-006 的同一机制）。
+  4. 物理卡数：`lspci` 统计 NVIDIA 设备数，命令为 `lspci -d 10de::0300` 与 `lspci -d 10de::0302` 之和。不依赖驱动是否加载。
+  5. 驱动加载：`nvidia-smi -L` 退出码为 0 判 PASS；非零（含退出码 9，驱动未加载）判 FAIL。SSH 等采集失败才判 ERROR（source=collect）。不依赖 GPU Operator 的 CR 或 DaemonSet 名称。
+  6. 白名单新增两条固定只读命令 ID：`gpu-lspci-nvidia-vga`、`gpu-nvidia-smi-list`，注册于 `internal/collect/whitelist.go`，属 B 类。
+  7. 检查结果按 `nvidia.com/gpu.product` 机型分组输出。
+  8. 版本类检查（REQ-003）不在本决策范围内。
+- 原因：GPU 检测与 kubespray 2.32 的部署版本无直接关系；独立规则包避免基线耦合。驱动与卡数分别取数，驱动未加载时仍能得到卡数，避免两类问题互相掩盖。
+- 影响：`rules/gpu/`（新增，门禁文件，期望值逐条需人确认）；`internal/collect/whitelist.go`（新增两条命令，门禁相关）；`cmd/kready`（新增 `--pack` 参数）；`internal/check`（分组输出）；REQ-001、REQ-002。
+- 待验证（实施前在真实节点上确认，不影响本草案结论）：
+  - `lspci -d 10de::0302` 类代码是否覆盖 H100、H200、B200、B300 等数据中心卡，若不覆盖需补充类代码。
+  - `nvidia-smi -L` 在驱动未加载时的确切退出码（本草案按 NVIDIA 文档的 9 为准，待实测）。
+- 依据：
+  - NVIDIA GPU Operator 排错文档中 `nvidia-smi` 退出码说明（<https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/troubleshooting.html>）。
+  - GFD 标签定义（<https://github.com/NVIDIA/k8s-device-plugin/blob/main/docs/gpu-feature-discovery/README.md>）。
+  - 人确认 REQ-001、REQ-002 的范围与答复，以及"允许通过 SSH 读取节点硬件信息"（本次会话）。
 - 决策人：kitsnail（待确认）
 
-### 待人确认的问题
+### 已由 Agent 决定的问题（待人批准）
 
-1. 两个规则包的运行入口：`kready check` 同时跑 2.32 与 gpu 两个包，还是通过参数（如 `--pack gpu`）分开运行？
-2. GPU 规则包的选包条件：按 GPU Operator 是否部署判断，还是始终运行？
-3. 节点硬件信息的具体项：物理卡数由哪条命令得到（例如 `lspci` 统计 NVIDIA 设备，或 `nvidia-smi -L`）？`nvidia-smi` 依赖驱动已加载，未加载时会失败，这时结果应判 ERROR 还是 FAIL？
-4. 驱动加载的取数方式：读取 GPU Operator 的 ClusterPolicy 状态，还是 driver DaemonSet 是否 Ready，或两者都读？
+以下四个问题原为待确认项，人授权 Agent 自行研究并决定。Agent 决定见 D-012 第 2、4、5 条，取数依据见「依据」。若人不同意任一决定，请指出编号。
 
