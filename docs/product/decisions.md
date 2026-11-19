@@ -104,35 +104,26 @@
 - 依据：人回复"Q1 和 Q2 按推荐来，已确认 D-011"（本次会话，2026-11-19）。
 - 决策人：kitsnail
 
-## 待确认草案（未生效）
-
-> 以下 D-012 为草案，由 Agent 起草，经人确认后方可补记为正式条目（B 类）。
-
-### D-012（草案）GPU 检测规则包与取数方式（日期：确认时填写）
+### D-012 GPU 检测规则包与取数方式（2026-11-19）
 
 - 决策：
   1. 新增独立规则包 `rules/gpu/`，与 `rules/2.32/` 解耦，不使用 `applies_to.kubelet` 选包。
   2. 运行入口：新增 `kready check --pack gpu`，仅显式指定时运行。`kready check` 默认行为（只跑 2.32）不变。不做自动探测。
   3. 取数方式：
-     - 集群级数据经 Kubernetes API 只读获取（`get` / `list`）。
-     - 节点硬件信息经 SSH 只读采集（依据 D-006 的同一机制）。
-  4. 物理卡数：`lspci` 统计 NVIDIA 设备数，命令为 `lspci -d 10de::0300` 与 `lspci -d 10de::0302` 之和。不依赖驱动是否加载。
-  5. 驱动加载：`nvidia-smi -L` 退出码为 0 判 PASS；非零（含退出码 9，驱动未加载）判 FAIL。SSH 等采集失败才判 ERROR（source=collect）。不依赖 GPU Operator 的 CR 或 DaemonSet 名称。
-  6. 白名单新增两条固定只读命令 ID：`gpu-lspci-nvidia-vga`、`gpu-nvidia-smi-list`，注册于 `internal/collect/whitelist.go`，属 B 类。
+     - 集群级数据经 Kubernetes API 只读获取（`get` / `list`）；
+     - 节点硬件信息经 SSH 只读采集，机制同 D-006。
+  4. 物理卡数：`lspci -d 10de::0300` 与 `lspci -d 10de::0302` 的设备数之和。不依赖驱动是否加载。
+  5. 驱动加载：`nvidia-smi -L` 退出码为 0 判 PASS；非零（含退出码 9，驱动未加载）判 FAIL。仅 SSH 等采集失败判 ERROR（`source=collect`）。不依赖 GPU Operator 的 CR 或 DaemonSet 名称。
+  6. 白名单新增两条固定只读命令 ID：`gpu-lspci-nvidia-vga`、`gpu-nvidia-smi-list`，注册于 `internal/collect/whitelist.go`。
   7. 检查结果按 `nvidia.com/gpu.product` 机型分组输出。
   8. 版本类检查（REQ-003）不在本决策范围内。
-- 原因：GPU 检测与 kubespray 2.32 的部署版本无直接关系；独立规则包避免基线耦合。驱动与卡数分别取数，驱动未加载时仍能得到卡数，避免两类问题互相掩盖。
-- 影响：`rules/gpu/`（新增，门禁文件，期望值逐条需人确认）；`internal/collect/whitelist.go`（新增两条命令，门禁相关）；`cmd/kready`（新增 `--pack` 参数）；`internal/check`（分组输出）；REQ-001、REQ-002。
-- 待验证（实施前在真实节点上确认，不影响本草案结论）：
-  - `lspci -d 10de::0302` 类代码是否覆盖 H100、H200、B200、B300 等数据中心卡，若不覆盖需补充类代码。
-  - `nvidia-smi -L` 在驱动未加载时的确切退出码（本草案按 NVIDIA 文档的 9 为准，待实测）。
+- 原因：GPU 检测与 kubespray 2.32 的部署版本无直接关系，独立规则包避免基线耦合。驱动与卡数分别取数，驱动未加载时仍能得到卡数，两类问题不互相掩盖。
+- 影响：`rules/gpu/`（新增；期望值仍须逐条人工批准，D-012 不构成对期望值的批准）；`internal/collect/whitelist.go`（新增两条命令）；`cmd/kready`（新增 `--pack` 参数）；`internal/check`（分组输出）；REQ-001、REQ-002。
+- 实施前待验证（需有 GPU 的真实节点）：
+  - `lspci -d 10de::0302` 是否覆盖 H100、H200、B200、B300 等数据中心卡；不覆盖则补充类代码。
+  - `nvidia-smi -L` 在驱动未加载时的实际退出码（本决策按 NVIDIA 文档的 9）。
 - 依据：
-  - NVIDIA GPU Operator 排错文档中 `nvidia-smi` 退出码说明（<https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/troubleshooting.html>）。
+  - NVIDIA GPU Operator 排错文档，`nvidia-smi` 返回码说明（<https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/troubleshooting.html>）。
   - GFD 标签定义（<https://github.com/NVIDIA/k8s-device-plugin/blob/main/docs/gpu-feature-discovery/README.md>）。
-  - 人确认 REQ-001、REQ-002 的范围与答复，以及"允许通过 SSH 读取节点硬件信息"（本次会话）。
-- 决策人：kitsnail（待确认）
-
-### 已由 Agent 决定的问题（待人批准）
-
-以下四个问题原为待确认项，人授权 Agent 自行研究并决定。Agent 决定见 D-012 第 2、4、5 条，取数依据见「依据」。若人不同意任一决定，请指出编号。
-
+  - 人确认 REQ-001、REQ-002 的范围与答复；人确认"允许通过 SSH 读取节点硬件信息"；人回复"同意 D-012"（本次会话）。
+- 决策人：kitsnail
