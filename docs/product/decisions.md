@@ -103,3 +103,28 @@
 - 修订：修订 D-003 中"检查逻辑任何变更暂缓"的部分；D-003 其余条目（规则与期望值暂缓）不变。
 - 依据：人回复"Q1 和 Q2 按推荐来，已确认 D-011"（本次会话，2026-11-19）。
 - 决策人：kitsnail
+
+## 待确认草案（未生效）
+
+> 以下 D-012 为草案，由 Agent 起草，经人确认后方可补记为正式条目（B 类）。
+
+### D-012（草案）GPU 检测规则包与取数方式（日期：确认时填写）
+
+- 决策：
+  1. 新增独立规则包 `rules/gpu/`，与 `rules/2.32/` 解耦，不使用 `applies_to.kubelet` 选包；选包依据由 GPU 规则包自身声明（待实现时确定，例如按 GPU Operator 存在与否）。
+  2. 取数方式：集群级数据经 Kubernetes API 只读获取（`get` / `list`）；节点硬件信息经 SSH 只读采集（允许，依据 D-006 的同一机制）。
+  3. 节点硬件信息的采集命令必须在 `internal/collect/whitelist.go` 中注册为固定只读命令 ID，规则不得写 shell 命令。新增命令属 B 类，需随本决策一并确认。
+  4. 检查结果按 `nvidia.com/gpu.product` 机型分组输出。
+  5. 版本类检查（REQ-003）不在本决策范围内。
+- 原因：GPU 检测与 kubespray 2.32 的部署版本无直接关系；独立规则包避免与 2.32 的基线耦合。
+- 影响：`rules/gpu/`（新增，门禁文件，期望值逐条需人确认）；`internal/collect/whitelist.go`（新增命令，门禁相关）；`internal/check`（输出分组、两包的运行入口）；REQ-001、REQ-002。
+- 依据：人确认 REQ-001、REQ-002 的范围与答复（本次会话）；人确认"允许通过 SSH 读取节点硬件信息"（本次会话）。
+- 决策人：kitsnail（待确认）
+
+### 待人确认的问题
+
+1. 两个规则包的运行入口：`kready check` 同时跑 2.32 与 gpu 两个包，还是通过参数（如 `--pack gpu`）分开运行？
+2. GPU 规则包的选包条件：按 GPU Operator 是否部署判断，还是始终运行？
+3. 节点硬件信息的具体项：物理卡数由哪条命令得到（例如 `lspci` 统计 NVIDIA 设备，或 `nvidia-smi -L`）？`nvidia-smi` 依赖驱动已加载，未加载时会失败，这时结果应判 ERROR 还是 FAIL？
+4. 驱动加载的取数方式：读取 GPU Operator 的 ClusterPolicy 状态，还是 driver DaemonSet 是否 Ready，或两者都读？
+
