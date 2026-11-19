@@ -22,22 +22,21 @@
 
 ## REQ-001 GPU 节点自洽检查：device plugin、可分配 GPU 数、节点标签与污点
 
-- [ ] 标准 1：GPU 节点上 device plugin 的 DaemonSet 处于 Ready 状态时，判定为正常；否则判定为异常，并列出实际 Ready 数与期望数。
-- [ ] 标准 2：GPU 节点的 `status.allocatable["nvidia.com/gpu"]` 与 GFD 标签 `nvidia.com/gpu.count` 相等时，判定为正常；不等时判定为异常，列出两个实际值。
-- [ ] 标准 2a：结果按 `nvidia.com/gpu.product` 机型分组输出；同一机型的节点在同一组内列出。
-- [ ] 标准 3：带有 GPU 资源的节点存在 GPU 相关标签（具体标签名待 D-012 确认）时判定为正常；缺失时判定为异常。
-- [ ] 标准 4：带有 GPU 资源的节点存在 GPU 相关污点（具体污点名待 D-012 确认）时判定为正常；缺失时判定为异常。
-- [ ] 标准 5：所有取数只使用 `get` / `list`，不产生写操作。
+- [ ] 标准 1：对带 `nvidia.com/gpu.present=true` 标签的节点，属于 device plugin 的 Pod 全部 Ready 时判正常；否则判异常，列出 Ready 数与期望数。
+- [ ] 标准 2：节点 `status.allocatable["nvidia.com/gpu"]` 与 GFD 标签 `nvidia.com/gpu.count` 相等时判正常；不等时判异常，列出两个实际值。
+- [ ] 标准 3：带 GPU 资源的节点缺少 GFD 标签 `nvidia.com/gpu.count` 时判异常；存在时判正常。
+- [ ] 标准 4：列出 GPU 节点上的全部污点，输出为 INFO，不判定。
+- [ ] 标准 5：结果按 `nvidia.com/gpu.product` 机型分组输出。
+- [ ] 标准 6：所有取数只使用 `get` / `list`，不产生写操作。
 
 验收人：待定　日期：待定
 
 ## REQ-002 GPU 节点存在性检查：驱动加载与 GPU 数量
 
-- [ ] 标准 1：驱动加载检查的取数方式（GPU Operator ClusterPolicy 状态或 driver DaemonSet）待 D-012 确认后补充，判定规则为"已加载判正常，未加载判异常"。
-- [ ] 标准 1a：结果按 `nvidia.com/gpu.product` 机型分组输出。
-- [ ] 标准 2：物理卡数同时取 GFD 标签 `nvidia.com/gpu.count` 与节点硬件信息两个来源；两者不一致，或节点 allocatable GPU 数与物理卡数不一致时，判定为异常，并列出各实际值。
-- [ ] 标准 2a：结果按 `nvidia.com/gpu.product` 机型分组输出。
-- [ ] 标准 3：所有取数只使用 `get` / `list`，不产生写操作。
+- [ ] 标准 1：对 GPU 节点执行 `nvidia-smi -L`，退出码为 0 时判正常；非 0 时判异常，列出退出码。
+- [ ] 标准 2：节点 `lspci` 统计的 NVIDIA 设备数（类代码 `0300` 与 `0302` 之和）与 GFD 标签 `nvidia.com/gpu.count` 不一致，或与 allocatable `nvidia.com/gpu` 不一致时判异常，列出各实际值。
+- [ ] 标准 3：结果按 `nvidia.com/gpu.product` 机型分组输出。
+- [ ] 标准 4：所有取数只使用只读命令（`get` / `list` 与白名单只读命令），不产生写操作。
 
 验收人：待定　日期：待定
 
