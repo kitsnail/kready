@@ -556,3 +556,28 @@ func TestToolGapSameReasonMergedToOneLine(t *testing.T) {
 		}
 	}
 }
+
+// --pack gpu：显式加载 GPU 规则包（D-012），当前无规则，输出正常，退出码 0。
+func TestCheckPackGPU(t *testing.T) {
+	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"), "--pack", "gpu")
+	if code != 0 {
+		t.Fatalf("退出码 = %d，期望 0", code)
+	}
+	if !strings.HasPrefix(out, "正常") {
+		t.Fatalf("首行应为正常，实际输出: %q", out)
+	}
+}
+
+// --pack 指定未知规则包：无适用规则，退出码 2，不做判定。
+func TestCheckPackUnknown(t *testing.T) {
+	code, out, errb := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"), "--pack", "nope")
+	if code != 2 {
+		t.Fatalf("退出码 = %d，期望 2", code)
+	}
+	if out != "" {
+		t.Fatalf("不应输出判定结论，实际: %q", out)
+	}
+	if !strings.Contains(errb, "无适用规则") {
+		t.Fatalf("错误信息应包含「无适用规则」，实际: %q", errb)
+	}
+}

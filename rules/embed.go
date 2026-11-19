@@ -6,5 +6,5 @@ import "embed"
 
 // Data 是所有规则包的只读文件系统，路径形如 "2.32/rules.yaml"。
 //
-//go:embed 2.32/rules.yaml
+//go:embed 2.32/rules.yaml gpu/rules.yaml
 var Data embed.FS

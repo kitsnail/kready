@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- GPU 规则包骨架（D-012）：新增 `kready check --pack gpu` 显式指定规则包；`rules/gpu/rules.yaml` 仅含头部，尚无规则。缺省 `--pack` 时选包行为不变。
+
 ### Changed
 - Agent 自主推进（D-011）：AGENTS.md 新增 REQ 确认后的 A 类授权（检查逻辑）、独立审查合并条件、澄清/自动推进/升级三条工作方式；`docs/product/README.md` 新增字段级权限。`rules/`、`testdata/` 期望值仍须人工批准。
 - CI 门禁（方案 B、C）：修改 `Makefile`、`.github/`、`.githooks/`、`rules/`、`testdata/` 的 PR 须在正文引用 `D-nnn`；修改 `internal/`、`cmd/`、`rules/` 的 PR 须同时更新 `CHANGELOG.md`。仅对 `pull_request` 事件生效。
