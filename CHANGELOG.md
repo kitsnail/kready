@@ -2,6 +2,23 @@
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。版本号遵循 SemVer，0.x 阶段的规则见 `docs/design/versioning.md`。
 
+## [0.1.1](https://github.com/kitsnail/kready/compare/v0.1.0...v0.1.1) (2026-11-21)
+
+
+### Features
+
+* **rules:** GPU 规则包首批规则 GPU-01～04（REQ-001，D-014） ([56bcaf2](https://github.com/kitsnail/kready/commit/56bcaf243abc6bc85bf22c50ea6faf9232c3e684))
+* **rules:** GPU 规则包首批规则 GPU-01～04（REQ-001，D-014） ([c9a2652](https://github.com/kitsnail/kready/commit/c9a2652fda44e4152e98dd1461408622af2c0b29))
+* **rules:** GPU-05 驱动加载检查与白名单 exit_code 模式（REQ-002，D-014） ([7249868](https://github.com/kitsnail/kready/commit/7249868a7fcd5530d91f0f8d9b0608609c2a6917))
+* **rules:** GPU-05 驱动加载检查与白名单 exit_code 模式（REQ-002，D-014） ([5fcaf70](https://github.com/kitsnail/kready/commit/5fcaf70b6374fe2fbbe6bb2967d25353aef685b5))
+* **rules:** 新增 --pack 显式选包与 GPU 规则包骨架（D-012） ([#17](https://github.com/kitsnail/kready/issues/17)) ([c6d6dd3](https://github.com/kitsnail/kready/commit/c6d6dd332f60c96ea5ff44ca4f3e5b7890ad4ba2))
+
+
+### Bug Fixes
+
+* **rules:** GPU-01 多选择器适配 GPU Operator 部署（REQ-003，D-015） ([1513a37](https://github.com/kitsnail/kready/commit/1513a37744abef340032f8732285f7d13a85bb15))
+* **rules:** GPU-01 多选择器适配 GPU Operator 部署（REQ-003） ([4ffd3ab](https://github.com/kitsnail/kready/commit/4ffd3ab78f74728788c2c71388ee810581500281))
+
 ## [Unreleased]
 
 ### Added
