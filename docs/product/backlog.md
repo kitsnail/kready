@@ -56,14 +56,14 @@
 - 验收标准：见 `acceptance.md` 中的 REQ-004
 - 关联：CP-02、CP-03、CP-04、CP-05（规则条目与期望值需人批准后写入 `rules/`）
 
-### REQ-005 控制面资源与 etcd 配额检查（CP-06～CP-08）
+### REQ-005 控制面资源配置检查（CP-06～CP-07）
 
 - 状态：草稿
 - 优先级：高
-- 背景：草案 CP-06～08（kcm 内存 request/limit 均设置、kcm startupProbe 已配置、etcd 后端配额 8 GiB）需快照扩展 Deployment/Pod 资源字段，实现后控制面资源配置缺陷可自动检出。
-- 期望结果：`kready check` 对 CP-06～08 报出判定结果；资源配置缺失或配额不符时报 FAIL。
+- 背景：草案 CP-06～07（kcm 内存 request/limit 均设置、kcm startupProbe 已配置）需快照扩展 Deployment/Pod 资源字段，实现后控制面资源配置缺陷可自动检出。CP-08 已实现（快照离线判定可用），但 live 采集的集群级 config 无来源（`internal/collect/live.go` 留空），线上运行报 ERROR，补齐 config 采集另立需求。
+- 期望结果：`kready check` 对 CP-06～07 报出判定结果；资源配置缺失时报 FAIL。
 - 验收标准：见 `acceptance.md` 中的 REQ-005
-- 关联：CP-06、CP-07、CP-08（规则条目与期望值需人批准后写入 `rules/`）
+- 关联：CP-06、CP-07（规则条目与期望值需人批准后写入 `rules/`）
 
 ### REQ-006 系统组件健康检查（SYS-01～SYS-03）
 
@@ -91,3 +91,12 @@
 - 期望结果：模块未加载、转发未开启或 swap 未关闭时报 FAIL 并列出实际值与期望值。
 - 验收标准：见 `acceptance.md` 中的 REQ-008
 - 关联：OS-01、OS-02、OS-03、D-017（采集命令与期望值需人批准）
+
+### REQ-009 节点就绪与证书续期检查（NODE-01、POL-01）
+
+- 状态：草稿
+- 优先级：中
+- 背景：NODE-01（节点 Ready）与 POL-01（证书自动续期 `false`，D-017 已裁定期望值）尚未实现；POL-02（CoreDNS 上游与 inventory 一致）涉及 inventory 对比方案，待 REQ-004～008 落地后另行评估。
+- 期望结果：`kready check` 对 NODE-01 与 POL-01 报出判定结果；节点未 Ready 或证书续期开启时报 FAIL。
+- 验收标准：见 `acceptance.md` 中的 REQ-009
+- 关联：NODE-01、POL-01、D-017（POL-01 期望值已裁定；规则条目写入 `rules/` 需人批准）
