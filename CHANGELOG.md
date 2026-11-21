@@ -2,6 +2,11 @@
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。版本号遵循 SemVer，0.x 阶段的规则见 `docs/design/versioning.md`。
 
+## [Unreleased]
+
+### Notes
+- 决策留痕：补记 D-017（POL-01 统一 `false`；POL-03 结果判定拆 03a/03b；OS 内核参数 OS-01～03 纳入草案；NODE-05 维持 info）。
+
 ## [0.1.1](https://github.com/kitsnail/kready/compare/v0.1.0...v0.1.1) (2026-11-21)
 
 

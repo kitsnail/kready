@@ -139,3 +139,23 @@
 - 影响：`rules/gpu/rules.yaml`、`testdata/positive/gpu/`、`internal/check`、`docs/design/rule-schema.md`、`docs/rules/gpu-draft.md`；REQ-003。
 - 依据：人多选择器方案选择并回复"确认"（本次会话，2026-11-21）。
 - 决策人：kitsnail
+
+### D-017 POL-01/POL-03/OS 参数/NODE-05 四项裁定（2026-11-21）
+
+- 决策：
+  1. **POL-01**：证书自动续期期望值统一为 `false`；串行续期编排场景将来出现时另行走 B 类改基线。
+  2. **POL-03**：采用结果判定，不检查 NTP 配置与服务器地址。拆为两条：POL-03a（每节点，judge）NTP 同步状态 = `yes`（采集 `timedatectl show --property=NTPSynchronization --value`，后端无关）；POL-03b（集群，judge）节点间时钟偏差 ≤ `1000ms`（采集每节点 `date +%s%3N`，max−min 判定）。NTP 服务器地址由 inventory 自行决定，kready 不检查。
+  3. **OS 内核参数**：纳入检查。`br_netfilter` 模块加载、`net.ipv4.ip_forward=1`、swap 关闭三项，依据 scclabs-k8s-in-action os 配置，规则条目与期望值按 B 类流程另行批准后写入 `rules/`。
+  4. **NODE-05**：维持 `mode: info` 不判定；待有现场数据后再议判定方案。
+- 原因：待确认清单 4 项经人逐项裁定（见依据）；NTP 服务器地址属机房环境事实，检查配置或固定值会跨现场误报。
+- 影响：`docs/rules/2.32-draft.md`（待确认条目落定）；后续 REQ 涉及 `rules/2.32/rules.yaml`、`internal/collect`（白名单新增 3～4 条命令）、`testdata/`。
+- 依据：人于 2026-11-21 会话中对 4 项 AskUserQuestion 逐项选择：POL-01「统一 false」、POL-03「结果判定（推荐）」（先经方案研究确认）、OS 参数「纳入（推荐）」、NODE-05「维持 info（推荐）」。
+- 决策人：kitsnail
+
+### D-016 NODE-02/NODE-03 inotify 期望值维持不变（2026-11-21）
+
+- 决策：交付基线要求应用 inotify sysctl（配置源 scclabs-k8s-in-action `k8s/os/80-inotify.conf`，经 `improve_os.sh` 下发），NODE-02/NODE-03 期望值维持 `1280`/`655360` 不变。sd1-dev1-maas（7 节点）与 sd1-dev1-mlops（3 节点）实测 `8192`/`1048576`（Ubuntu 发行版默认值，配置未应用）判定为真实交付缺陷，非基线过时。
+- 原因：两集群实测一致偏离期望值，需裁定是基线过时还是交付缺陷；经确认交付基线要求应用该 sysctl。
+- 影响：`rules/2.32/rules.yaml` 零改动；`docs/rules/2.32-draft.md` §八.6 记录裁定。
+- 依据：PR #27（提交 `e12e50f`，草案 §八.6 记录裁定内容）；本条为补记入册。
+- 决策人：kitsnail
