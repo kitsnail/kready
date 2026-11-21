@@ -51,8 +51,8 @@
 
 | ID | 命令 | 说明 |
 |---|---|---|
-| `gpu-lspci-nvidia-vga` | `lspci -d 10de::0300` | 统计 NVIDIA VGA 类设备。与 `0302` 之和待 GPU-06 实施时补充 |
-| `gpu-nvidia-smi-list` | `nvidia-smi -L` | 驱动加载检查，退出码为判定依据 |
+| `gpu-lspci-nvidia-vga` | `lspci -d 10de::0300` | **暂缓**：随 GPU-06 一并实施时再申请批准，本轮不申请 |
+| `gpu-nvidia-smi-list` | `nvidia-smi -L` | 驱动加载检查，退出码为判定依据（本轮申请批准） |
 
 两条均为只读，不含写操作。
 
@@ -65,6 +65,6 @@
 ## 四、待人决定的问题
 
 1. 是否批准 GPU-01 至 GPU-05 的期望值与判定类型（GPU-02、GPU-05 需新判定，GPU-04 需扩展快照）。
-2. 是否批准白名单两条命令。
+2. 是否批准白名单命令 `gpu-nvidia-smi-list`（`nvidia-smi -L`，仅此一条）；`gpu-lspci-nvidia-vga` 随 GPU-06 暂缓，本轮不申请。
 3. 是否批准输出契约中新增"未运行任何规则"取值。
 4. GPU-06 暂缓，是否同意。

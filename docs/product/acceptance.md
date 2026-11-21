@@ -24,7 +24,7 @@
 
 ## REQ-001 GPU 节点基础检查
 
-- [ ] 标准 1：GPU-01：标签 `nvidia.com/gpu.present=true` 的节点上，device plugin Pod 全部 Ready，判「正常」；任一未 Ready，判「异常」（error）。Pod 标签选择器实施前在真实集群核对。
+- [ ] 标准 1：GPU-01：标签 `nvidia.com/gpu.present=true` 的节点上，device plugin Pod 全部 Ready，判「正常」；任一未 Ready，判「异常」（error）。
 - [ ] 标准 2：GPU-02：`status.allocatable["nvidia.com/gpu"]` 等于标签 `nvidia.com/gpu.count`，判「正常」；不等，判「异常」（error）。
 - [ ] 标准 3：GPU-03：GPU 节点标签 `nvidia.com/gpu.count` 存在且非空，判「正常」；缺失或为空，判「异常」（error）。
 - [ ] 标准 4：GPU-04：GPU 节点的污点列表以信息项（INFO）输出，不影响结论。
