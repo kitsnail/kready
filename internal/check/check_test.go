@@ -218,3 +218,66 @@ func TestMissingNodeFileIsError(t *testing.T) {
 		t.Errorf("缺失节点 cp-2 应对 NODE-02 报 ERROR；结果: %v", results)
 	}
 }
+
+// GPU-01 多选择器（REQ-003，D-015）：两种部署方式的标签均纳入判定。
+// 正例快照中 gpu-1 的 plugin Pod 用 Helm 标签、gpu-2 用 GPU Operator 标签，两节点都应 PASS。
+func TestGPU01SelectorsMatchEitherDeployment(t *testing.T) {
+	p := loadPack(t, "gpu")
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "gpu"))
+	if err != nil {
+		t.Fatalf("加载正例快照: %v", err)
+	}
+	pass := map[string]bool{}
+	for _, r := range check.Run(p, s) {
+		if r.ID != "GPU-01" {
+			continue
+		}
+		if r.Status != check.Pass {
+			t.Errorf("GPU-01 %s = %v（实际 %q），期望 PASS（两种部署标签均应匹配）", r.Target, r.Status, r.Actual)
+		}
+		pass[r.Target] = true
+	}
+	if !pass["gpu-1"] || !pass["gpu-2"] {
+		t.Errorf("GPU-01 应在 gpu-1、gpu-2 上各输出一条结果，实际覆盖 %v", pass)
+	}
+}
+
+// GPU-01 两种标签都无匹配时判 FAIL（未部署）（REQ-003 标准 2）。
+func TestGPU01NoMatchingPodsIsFail(t *testing.T) {
+	p := loadPack(t, "gpu")
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "gpu"))
+	if err != nil {
+		t.Fatalf("加载正例快照: %v", err)
+	}
+	for i := range s.Cluster.Pods {
+		s.Cluster.Pods[i].Labels = map[string]string{"app": "unrelated"}
+	}
+	for _, r := range check.Run(p, s) {
+		if r.ID != "GPU-01" {
+			continue
+		}
+		if r.Status != check.Fail || r.Actual != "0/0" {
+			t.Errorf("GPU-01 %s = %v（实际 %q），期望 FAIL 0/0（未部署）", r.Target, r.Status, r.Actual)
+		}
+	}
+}
+
+// all_ready 选择器列表非法（非 key=value）时报 ERROR（tool-gap）。
+func TestAllReadyInvalidSelectorIsError(t *testing.T) {
+	p := &rules.Pack{Pack: "test", Rules: []rules.Rule{{
+		ID: "T-01", Title: "测试", Status: "active", Mode: "judge", Scope: "node",
+		Field: "pods", Check: "all_ready",
+		Expect: map[string]string{"selectors": "bad"},
+	}}}
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "gpu"))
+	if err != nil {
+		t.Fatalf("加载正例快照: %v", err)
+	}
+	results := check.Run(p, s)
+	if len(results) != 1 {
+		t.Fatalf("应输出一条结果，得到 %d", len(results))
+	}
+	if r := results[0]; r.Status != check.Error || r.Source != check.SourceToolGap {
+		t.Errorf("非法选择器应报 ERROR（tool-gap），得到 %+v", r)
+	}
+}

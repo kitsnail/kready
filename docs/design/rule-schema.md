@@ -42,7 +42,7 @@
 | `equals` | `value` | 实际值等于 `value` |
 | `count` | `value`，可选 `role` | 对象数量等于 `value` |
 | `count_eq_nodes` | `role` | 对象数量等于该角色节点数 |
-| `all_ready` | `selector`（`key=value`） | 目标节点上匹配选择器的 Pod 全部 Ready；一个都没有视为 FAIL（未部署）。实际值为 `Ready 数/总数` |
+| `all_ready` | `selectors` | 目标节点上匹配任一选择器的 Pod 全部 Ready；一个都没有视为 FAIL（未部署）。实际值为 `Ready 数/总数`。`selectors` 为逗号分隔的 `key=value` 列表（k8s 标签键值不含逗号，D-015） |
 | `no_restarts` | `window` | 窗口内重启次数为 0，单位 `m` |
 | `set` | — | 字段存在且非空。缺失即 FAIL，实际值显示为“（缺失）” |
 | `equals_label` | `label` | 实际值等于同节点的另一标签值，期望值逐节点取自快照 |

@@ -256,19 +256,19 @@ func formatTaints(n snapshot.Node) string {
 	return strings.Join(parts, ",")
 }
 
-// runPodsReady 判定目标节点上匹配选择器的 Pod 全部 Ready。
-// 实际值为“Ready 数/总数”；GPU 节点上一个 Pod 都没有视为 FAIL（未部署）。
+// runPodsReady 判定目标节点上匹配任一选择器的 Pod 全部 Ready。
+// 实际值为“Ready 数/总数”；目标节点上一个 Pod 都没有视为 FAIL（未部署）。
 func runPodsReady(r rules.Rule, s *snapshot.Snapshot, targets []string) []Result {
-	key, value, ok := strings.Cut(r.Expect["selector"], "=")
-	if !ok {
-		return []Result{{ID: r.ID, Status: Error, Target: "cluster", Error: "规则配置错误，选择器须为 key=value: " + r.Expect["selector"], Source: SourceToolGap}}
+	sels, err := parseSelectors(r.Expect["selectors"])
+	if err != nil {
+		return []Result{{ID: r.ID, Status: Error, Target: "cluster", Error: err.Error(), Source: SourceToolGap}}
 	}
 	var out []Result
 	for _, name := range targets {
 		res := Result{ID: r.ID, Target: name, Expect: "全部 Ready"}
 		total, ready := 0, 0
 		for _, p := range s.Cluster.Pods {
-			if p.Node != name || p.Labels[key] != value {
+			if p.Node != name || !matchAnySelector(p.Labels, sels) {
 				continue
 			}
 			total++
@@ -285,6 +285,33 @@ func runPodsReady(r rules.Rule, s *snapshot.Snapshot, targets []string) []Result
 		out = append(out, res)
 	}
 	return out
+}
+
+// parseSelectors 解析逗号分隔的 key=value 选择器列表，Pod 标签匹配任一即纳入判定。
+// k8s 标签的键与值都不允许逗号，分隔符无歧义。
+func parseSelectors(s string) ([][2]string, error) {
+	if s == "" {
+		return nil, fmt.Errorf("规则配置错误，选择器列表为空")
+	}
+	var out [][2]string
+	for _, part := range strings.Split(s, ",") {
+		key, value, ok := strings.Cut(part, "=")
+		if !ok || key == "" {
+			return nil, fmt.Errorf("规则配置错误，选择器须为 key=value: %s", part)
+		}
+		out = append(out, [2]string{key, value})
+	}
+	return out, nil
+}
+
+// matchAnySelector 判断标签是否匹配任一选择器。
+func matchAnySelector(labels map[string]string, sels [][2]string) bool {
+	for _, kv := range sels {
+		if labels[kv[0]] == kv[1] {
+			return true
+		}
+	}
+	return false
 }
 
 func countNodes(s *snapshot.Snapshot, role string) int {

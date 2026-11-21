@@ -40,3 +40,11 @@
 - [x] 标准 3：GPU-05 有负例快照，报出 FAIL。
 
 验收人：kitsnail　日期：2026-11-21
+
+## REQ-003 GPU-01 适配 GPU Operator 部署
+
+- [ ] 标准 1：GPU Operator 标签（`app=nvidia-device-plugin-daemonset`）与 Helm 标签（`app.kubernetes.io/name=nvidia-device-plugin`）的 Pod 均被 GPU-01 纳入判定。
+- [ ] 标准 2：两种标签都无匹配时判「异常」（FAIL，未部署）。
+- [ ] 标准 3：匹配到的 Pod 任一未 Ready 判「异常」（FAIL）（既有语义不变）。
+
+验收人：　日期：
