@@ -24,19 +24,19 @@
 
 ## REQ-001 GPU 节点基础检查
 
-- [ ] 标准 1：GPU-01：标签 `nvidia.com/gpu.present=true` 的节点上，device plugin Pod 全部 Ready，判「正常」；任一未 Ready，判「异常」（error）。
-- [ ] 标准 2：GPU-02：`status.allocatable["nvidia.com/gpu"]` 等于标签 `nvidia.com/gpu.count`，判「正常」；不等，判「异常」（error）。
-- [ ] 标准 3：GPU-03：GPU 节点标签 `nvidia.com/gpu.count` 存在且非空，判「正常」；缺失或为空，判「异常」（error）。
-- [ ] 标准 4：GPU-04：GPU 节点的污点列表以信息项（INFO）输出，不影响结论。
-- [ ] 标准 5：`--pack gpu` 无 active 规则时，结论为「未运行任何规则」，退出码 0。
-- [ ] 标准 6：GPU-01～GPU-03 各有负例快照，报出对应规则的 FAIL（`testdata/negative/gpu/`）。
+- [x] 标准 1：GPU-01：标签 `nvidia.com/gpu.present=true` 的节点上，device plugin Pod 全部 Ready，判「正常」；任一未 Ready，判「异常」（error）。
+- [x] 标准 2：GPU-02：`status.allocatable["nvidia.com/gpu"]` 等于标签 `nvidia.com/gpu.count`，判「正常」；不等，判「异常」（error）。
+- [x] 标准 3：GPU-03：GPU 节点标签 `nvidia.com/gpu.count` 存在且非空，判「正常」；缺失或为空，判「异常」（error）。
+- [x] 标准 4：GPU-04：GPU 节点的污点列表以信息项（INFO）输出，不影响结论。
+- [x] 标准 5：`--pack gpu` 无 active 规则时，结论为「未运行任何规则」，退出码 0。
+- [x] 标准 6：GPU-01～GPU-03 各有负例快照，报出对应规则的 FAIL（`testdata/negative/gpu/`）。
 
-验收人：　日期：
+验收人：kitsnail　日期：2026-11-21
 
 ## REQ-002 GPU 驱动加载检查
 
-- [ ] 标准 1：GPU-05：GPU 节点上 `nvidia-smi -L` 退出码 0，判「正常」；非 0，判「异常」（error）。
-- [ ] 标准 2：白名单新增 `gpu-nvidia-smi-list`（`nvidia-smi -L`，只读），不引入其他命令。
-- [ ] 标准 3：GPU-05 有负例快照，报出 FAIL。
+- [x] 标准 1：GPU-05：GPU 节点上 `nvidia-smi -L` 退出码 0，判「正常」；非 0，判「异常」（error）。
+- [x] 标准 2：白名单新增 `gpu-nvidia-smi-list`（`nvidia-smi -L`，只读），不引入其他命令。
+- [x] 标准 3：GPU-05 有负例快照，报出 FAIL。
 
-验收人：　日期：
+验收人：kitsnail　日期：2026-11-21
