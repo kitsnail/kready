@@ -21,10 +21,17 @@ testdata/
 ```json
 {
   "nodes": [
-    { "name": "mn-1", "labels": { "node-role.kubernetes.io/control-plane": "" }, "ready": true, "kubelet": "v1.36.4" }
+    {
+      "name": "mn-1",
+      "labels": { "node-role.kubernetes.io/control-plane": "" },
+      "ready": true,
+      "kubelet": "v1.36.4",
+      "taints": [ { "key": "node-role.kubernetes.io/control-plane", "value": "", "effect": "NoSchedule" } ],
+      "allocatable": { "nvidia.com/gpu": "8" }
+    }
   ],
   "pods": [
-    { "namespace": "kube-system", "name": "kube-vip-mn-1", "ready": true, "restarts": 0 }
+    { "namespace": "kube-system", "name": "kube-vip-mn-1", "node": "mn-1", "labels": { "app.kubernetes.io/name": "kube-vip" }, "ready": true, "restarts": 0 }
   ],
   "config": {
     "etcd_version": "3.6.14",
@@ -36,6 +43,9 @@ testdata/
 ```
 
 - `nodes`：所有节点；`kubelet` 为节点 kubelet 版本。节点角色由 `labels` 推导（`node-role.kubernetes.io/control-plane` 存在即为控制面）。
+- `taints`（可选）：节点污点列表，每项含 `key`、`value`、`effect`。实时模式取自 `kubectl get nodes`。
+- `allocatable`（可选）：节点可分配资源量（字符串值），实时模式取自 `kubectl get nodes`。
+- `pods`：全部命名空间的 Pod。`node` 为所在节点名，`labels` 为 Pod 标签，均用于按节点与选择器筛选（如 GPU-01）。
 - `config`：集群配置项的字符串值，规则通过 `field: config.<key>` 引用。
 - 规则通过 `field` 声明取值方式，见 `rule-schema.md`。新增 `config` 键须同时更新本文件与规则。
 

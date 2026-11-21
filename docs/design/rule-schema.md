@@ -12,8 +12,9 @@
 | `mode` | 是 | `judge`：判定 PASS/FAIL；`info`：仅输出当前值 |
 | `scope` | 是 | `cluster` / `node` |
 | `source` | 是 | 依据，仅用于追溯，如 `new-cluster-config-guide.md:§4`。运行时不读取 |
-| `field` | 集群级 `check` 为 `equals` / `count` 时必填 | 集群级取值方式：`config.<key>` 读取快照 `config` 中的字段；`count_role` 按 `expect.role` 计数节点。节点级不用 `field`，用 `collect`。`equal_baseline` 不用 `field` |
-| `collect` | 否 | 取数据方式，见下文。缺省表示集群级取值（由 `field` 声明） |
+| `field` | 取值方式声明，见下文 | 集群级：`config.<key>` 读取快照 `config` 中的字段；`count_role` 按 `expect.role` 计数节点。节点级：`label.<key>` 节点标签值、`allocatable.<key>` 节点可分配资源量、`taints` 节点污点列表、`pods` 该节点的 Pod（配合 `check: all_ready`）。`equal_baseline` 不用 `field` |
+| `node_label` | 否，仅节点级 | 形如 `key=value`，规则只作用于带该标签的节点。无匹配节点时输出一条 SKIP，不判定 |
+| `collect` | 否 | 经 SSH 采集的取数方式，见下文。集群数据（`field`）与 `collect` 二选一 |
 | `check` | `judge` 时必填 | 判断方式，见下文 |
 | `expect` | `judge` 时必填 | 期望值，格式由 `check` 决定 |
 | `severity` | `judge` 时必填 | `error`：不符合时输出 FAIL，结论为异常；`warn`：输出 WARN，结论不变。取值规则随规则逐步定义 |
@@ -26,7 +27,7 @@
 |---|---|---|
 | `pack` | 是 | 规则包标识，如 `2.32` |
 | `rules_rev` | 是 | 规则版本，整数 |
-| `applies_to.kubelet` | 是 | 适用的 kubelet 版本列表，精确匹配。选包依据，见 `output-contract.md` |
+| `applies_to.kubelet` | 版本选包的包必填 | 适用的 kubelet 版本列表，精确匹配。选包依据，见 `output-contract.md`。仅 `--pack` 显式指定的包（如 `gpu`）留空，不做版本选包 |
 
 ## 状态
 
@@ -41,9 +42,10 @@
 | `equals` | `value` | 实际值等于 `value` |
 | `count` | `value`，可选 `role` | 对象数量等于 `value` |
 | `count_eq_nodes` | `role` | 对象数量等于该角色节点数 |
-| `all_ready` | — | 全部对象 Ready |
+| `all_ready` | `selector`（`key=value`） | 目标节点上匹配选择器的 Pod 全部 Ready；一个都没有视为 FAIL（未部署）。实际值为 `Ready 数/总数` |
 | `no_restarts` | `window` | 窗口内重启次数为 0，单位 `m` |
-| `set` | — | 字段存在且非空 |
+| `set` | — | 字段存在且非空。缺失即 FAIL，实际值显示为“（缺失）” |
+| `equals_label` | `label` | 实际值等于同节点的另一标签值，期望值逐节点取自快照 |
 | `equal_baseline` | `baseline: control-plane` | 非控制面节点的 kubelet 版本都等于控制面基线。基线缺失或控制面版本不一致、或工作节点版本为空时报 ERROR；版本不符的工作节点逐个列出，判 FAIL |
 
 只增不改语义。新增判断方式需要 B 类确认。

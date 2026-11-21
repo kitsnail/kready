@@ -1,8 +1,50 @@
 # GPU 检测规则包（D-012）。独立于 kubespray 2.32，仅 `kready check --pack gpu` 显式运行。
-# 本文件目前只含头部，不含任何规则。规则条目的期望值须人工逐条批准（AGENTS.md 门禁）。
+# 规则条目经 REQ-001/REQ-002 确认（D-014）。变更属 B 类，需人工确认。
 pack: "gpu"
-rules_rev: 1
+rules_rev: 2
 # GPU 包不做 kubelet 选包，applies_to 留空，选包走 --pack gpu。
 applies_to:
   kubelet: []
-rules: []
+rules:
+  - id: GPU-01
+    title: GPU 节点 device plugin Pod 全部 Ready
+    status: active
+    mode: judge
+    scope: node
+    node_label: nvidia.com/gpu.present=true
+    source: REQ-001 标准 1。Pod 选择器取 NVIDIA k8s-device-plugin Helm 默认标签 app.kubernetes.io/name=nvidia-device-plugin；GPU Operator 部署的标签可能不同，实施前须在真实集群核对（见 docs/rules/gpu-draft.md GPU-01 待实测）
+    field: pods
+    check: all_ready
+    expect:
+      selector: app.kubernetes.io/name=nvidia-device-plugin
+
+  - id: GPU-02
+    title: 可分配 GPU 数与 GFD 卡数标签一致
+    status: active
+    mode: judge
+    scope: node
+    node_label: nvidia.com/gpu.present=true
+    source: REQ-001 标准 2
+    field: allocatable.nvidia.com/gpu
+    check: equals_label
+    expect:
+      label: nvidia.com/gpu.count
+
+  - id: GPU-03
+    title: GFD 卡数标签存在
+    status: active
+    mode: judge
+    scope: node
+    node_label: nvidia.com/gpu.present=true
+    source: REQ-001 标准 3
+    field: label.nvidia.com/gpu.count
+    check: set
+
+  - id: GPU-04
+    title: GPU 节点污点
+    status: active
+    mode: info
+    scope: node
+    node_label: nvidia.com/gpu.present=true
+    source: REQ-001 标准 4。仅列出污点，不判定
+    field: taints
