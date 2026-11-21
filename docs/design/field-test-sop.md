@@ -30,7 +30,9 @@
 
 1. **live 默认包**：`kready check --live`，记录结论与退出码。
 2. **live GPU 包**：`kready check --live --pack gpu`，记录结论与退出码。
-3. **快照重放**：对两次 live 保存的快照分别执行 `kready check --snapshot <快照目录>`，结论与退出码须与 live 一致（判定可复现）。
+3. **快照重放**：对两次 live 保存的快照分别离线重跑，结论与退出码须与 live 一致（判定可复现）。快照不记录包选择，重放须带与 live 相同的包参数：
+   - 默认包：`kready check --snapshot <快照目录>`
+   - GPU 包：`kready check --snapshot <快照目录> --pack gpu`
 4. **产物核对**：`reports/` 有对应报告，`snapshots/` 有时间戳目录；同秒冲突加 `-2` 后缀，不覆盖旧文件。
 5. **结果对照**：与第五节基线表逐条对照，偏差须解释——集群新发现记入基线备注；工具缺陷走修复 PR；期望值疑问记入规则草案「待确认」。
 
