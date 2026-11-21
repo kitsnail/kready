@@ -6,8 +6,11 @@
 
 ### Added
 - GPU 规则包骨架（D-012）：新增 `kready check --pack gpu` 显式指定规则包；`rules/gpu/rules.yaml` 仅含头部，尚无规则。缺省 `--pack` 时选包行为不变。
+- GPU 规则包首批规则（REQ-001，D-014）：GPU-01 device plugin Pod 全部 Ready（选择器 `app.kubernetes.io/name=nvidia-device-plugin`）、GPU-02 可分配 GPU 数与 `nvidia.com/gpu.count` 标签一致（新判定 `equals_label`）、GPU-03 卡数标签存在、GPU-04 污点列出（INFO），`rules_rev` 升至 2。规则声明 `node_label` 但无匹配节点时输出 SKIP，不影响结论。
+- 快照扩展（REQ-001，D-014）：节点新增 `taints`、`allocatable`，Pod 新增 `node`、`labels`；实时模式经 `kubectl get pods -A` 采集 Pod 清单。
 
 ### Changed
+- 输出契约 v4（REQ-001，D-014）：结论新增「未运行任何规则」（规则包无 active 规则时，退出码 0）；`schema_version` 升至 4。
 - 决策留痕：补记 D-012（PR #17 正文已引用，此前未入册）；起草 REQ-001、REQ-002（GPU 检查需求，草稿待人确认）。
 - Agent 自主推进（D-011）：AGENTS.md 新增 REQ 确认后的 A 类授权（检查逻辑）、独立审查合并条件、澄清/自动推进/升级三条工作方式；`docs/product/README.md` 新增字段级权限。`rules/`、`testdata/` 期望值仍须人工批准。
 - CI 门禁（方案 B、C）：修改 `Makefile`、`.github/`、`.githooks/`、`rules/`、`testdata/` 的 PR 须在正文引用 `D-nnn`；修改 `internal/`、`cmd/`、`rules/` 的 PR 须同时更新 `CHANGELOG.md`。仅对 `pull_request` 事件生效。

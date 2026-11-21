@@ -19,13 +19,28 @@ func ClusterFromNodes(nodes []Node) snapshot.Cluster {
 	c := snapshot.Cluster{Config: map[string]string{}}
 	for _, n := range sorted {
 		c.Nodes = append(c.Nodes, snapshot.Node{
-			Name:    n.Name,
-			Labels:  n.Labels,
-			Ready:   n.Ready,
-			Kubelet: n.Kubelet,
+			Name:        n.Name,
+			Labels:      n.Labels,
+			Ready:       n.Ready,
+			Kubelet:     n.Kubelet,
+			Taints:      n.Taints,
+			Allocatable: n.Allocatable,
 		})
 	}
 	return c
+}
+
+// PodsFromList 将 kubectl Pod 清单转为快照的 pods 部分，按命名空间与名称排序。
+func PodsFromList(pods []snapshot.Pod) []snapshot.Pod {
+	sorted := make([]snapshot.Pod, len(pods))
+	copy(sorted, pods)
+	sort.Slice(sorted, func(i, j int) bool {
+		if sorted[i].Namespace != sorted[j].Namespace {
+			return sorted[i].Namespace < sorted[j].Namespace
+		}
+		return sorted[i].Name < sorted[j].Name
+	})
+	return sorted
 }
 
 // NodeData 在每个节点上执行 commandIDs 中的白名单命令，返回 节点名 → 命令ID → 输出。

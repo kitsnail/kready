@@ -1,70 +1,64 @@
-# GPU 规则草案（待人批准）
+# GPU 规则草案
 
-> 状态：草案。依据 D-012 与 REQ-001、REQ-002。未经批准不得写入 `rules/gpu/rules.yaml`。
-> 期望值须人工逐条批准（AGENTS.md 门禁）。
+> 状态：GPU-01 至 GPU-04 已批准实施（D-014，2026-11-21），见 `rules/gpu/rules.yaml`；GPU-05 随 REQ-002 实施；GPU-06 暂缓。
+> 期望值已人工逐条批准（AGENTS.md 门禁）。
 
-## 一、规则条目草案
+## 一、规则条目
 
-以下 ID 为建议值，批准后分配，不复用。
-
-### GPU-01（REQ-001 标准 1）device plugin Pod 全部 Ready
+### GPU-01（REQ-001 标准 1）device plugin Pod 全部 Ready — 已实施
 
 - scope：node（取 `nvidia.com/gpu.present=true` 的节点）
-- check：`all_ready`（复用现有判定）
-- 待实测：device plugin Pod 的标签选择器。官方 Helm 部署带 `app.kubernetes.io/name=nvidia-device-plugin` 标签（来源：NVIDIA k8s-device-plugin README 的 Helm 部署说明），GPU Operator 的标签可能不同，实施前在真实集群核对。
-- severity：error
+- check：`all_ready`，选择器 `app.kubernetes.io/name=nvidia-device-plugin`
+- 待实测：选择器取 NVIDIA k8s-device-plugin Helm 默认标签；GPU Operator 部署的标签可能不同，实施前须在真实集群核对（见 `rules/gpu/rules.yaml` GPU-01 source）。
 
-### GPU-02（REQ-001 标准 2）allocatable 与 GFD 卡数一致
+### GPU-02（REQ-001 标准 2）allocatable 与 GFD 卡数一致 — 已实施
 
 - scope：node
-- check：需新增判定类型（比较两个字段），属于 `internal/check` 的新判定，**B 类**。
+- check：`equals_label`（新判定类型，D-014 批准）
 - 期望：`status.allocatable["nvidia.com/gpu"] == label["nvidia.com/gpu.count"]`
-- severity：error
 
-### GPU-03（REQ-001 标准 3）GFD 卡数标签存在
+### GPU-03（REQ-001 标准 3）GFD 卡数标签存在 — 已实施
 
 - scope：node
-- check：`set`（复用现有判定）
+- check：`set`
 - 期望：标签 `nvidia.com/gpu.count` 存在且非空
-- severity：error
 
-### GPU-04（REQ-001 标准 4）污点列出（INFO）
+### GPU-04（REQ-001 标准 4）污点列出（INFO）— 已实施
 
 - scope：node
 - mode：`info`
-- 输出：GPU 节点的污点列表，不判定。
-- 注意：`mode: info` 是现有规则 schema 支持的值，但当前代码只采集节点标签与 kubelet 版本，污点字段需要扩展快照（属于 `internal/collect` 与 `snapshot` 的改动，**B 类**）。
+- 输出：GPU 节点的污点列表（`key=value:effect`，逗号分隔；无污点为“无”），不判定。
+- 快照已扩展节点 `taints`、`allocatable` 字段与 Pod `node`、`labels` 字段（见 `docs/design/snapshot-format.md`）。
 
-### GPU-05（REQ-002 标准 1）驱动加载
+### GPU-05（REQ-002 标准 1）驱动加载 — 随 REQ-002 实施
 
 - scope：node
 - collect：`command: gpu-nvidia-smi-list`，`as_root: false`
-- check：需新增判定类型（退出码为 0），**B 类**。
-- 期望：退出码 0 判 PASS；非 0 判 FAIL。
+- check：`equals`，期望值为命令退出码 `0`（白名单新增 exit_code 取结果方式）。
 - 待实测：驱动未加载时的确切退出码（NVIDIA 文档为 9）。判定只看 0 与非 0，具体值只影响 `actual` 文字。
 
 ### GPU-06（REQ-002 标准 2）物理卡数一致（**暂缓**）
 
-- 依赖 `lspci -d 10de::0302` 对数据中心卡的覆盖，未经实机验证，**本轮不实施**。
+- 依赖 `lspci -d 10de::0302` 对数据中心卡的覆盖，未经实机验证，本轮不实施。
 
-## 二、白名单命令草案（B 类）
+## 二、白名单命令
 
 | ID | 命令 | 说明 |
 |---|---|---|
 | `gpu-lspci-nvidia-vga` | `lspci -d 10de::0300` | **暂缓**：随 GPU-06 一并实施时再申请批准，本轮不申请 |
-| `gpu-nvidia-smi-list` | `nvidia-smi -L` | 驱动加载检查，退出码为判定依据（本轮申请批准） |
+| `gpu-nvidia-smi-list` | `nvidia-smi -L` | 驱动加载检查，退出码为判定依据（D-014 批准，随 REQ-002 实施） |
 
 两条均为只读，不含写操作。
 
-## 三、输出契约草案（B 类）
+## 三、输出契约（D-014 批准）
 
-- 问题：`--pack gpu` 无规则时输出"正常"，运维可能误读为 GPU 已检查通过。
-- 建议：规则包无 active 规则时，结论输出 `未运行任何规则`，退出码仍为 0（不是异常，也不是工具错误）。
-- 影响：`docs/design/output-contract.md`（新增结论取值）；`internal/check` 的结论计算；`schema_version` 按 `versioning.md` 判断是否递增（新增取值属于兼容性变更，需人确认）。
+- 规则包无 active 规则时，结论输出 `未运行任何规则`，退出码仍为 0（不是异常，也不是工具错误）。
+- 规则声明 `node_label` 但无匹配节点时输出 SKIP，不影响结论。
+- 已写入 `docs/design/output-contract.md`，`schema_version` 递增至 4。
 
-## 四、待人决定的问题
+## 四、已决事项（D-014，2026-11-21）
 
-1. 是否批准 GPU-01 至 GPU-05 的期望值与判定类型（GPU-02、GPU-05 需新判定，GPU-04 需扩展快照）。
-2. 是否批准白名单命令 `gpu-nvidia-smi-list`（`nvidia-smi -L`，仅此一条）；`gpu-lspci-nvidia-vga` 随 GPU-06 暂缓，本轮不申请。
-3. 是否批准输出契约中新增"未运行任何规则"取值。
-4. GPU-06 暂缓，是否同意。
+1. GPU-01 至 GPU-05 的期望值与判定类型已批准（GPU-02 `equals_label`、GPU-05 退出码判定为新判定；GPU-04 快照扩展已批准）。
+2. 白名单命令 `gpu-nvidia-smi-list`（`nvidia-smi -L`）已批准；`gpu-lspci-nvidia-vga` 随 GPU-06 暂缓。
+3. 输出契约新增“未运行任何规则”取值已批准。
+4. GPU-06 暂缓已同意。

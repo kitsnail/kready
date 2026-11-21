@@ -119,3 +119,15 @@
 - 影响：`.github/pull_request_template.md`（门禁文件）；不改变 CI 检查逻辑。
 - 依据：人指示按"闭环三事项"逐个执行，本项为其中第二项（本次会话，2026-11-21）。
 - 决策人：kitsnail
+
+### D-014 REQ-001/REQ-002 GPU 规则条目与期望值批准（2026-11-21）
+
+- 决策：批准 `docs/rules/gpu-draft.md` 所列条目：
+  1. GPU-01（device plugin Pod 全部 Ready，选择器 `app.kubernetes.io/name=nvidia-device-plugin`）、GPU-02（可分配 GPU 数与 `nvidia.com/gpu.count` 标签一致，新判定 `equals_label`）、GPU-03（`nvidia.com/gpu.count` 标签存在）、GPU-04（污点列出，INFO）写入 `rules/gpu/rules.yaml`，`rules_rev` 升至 2。
+  2. GPU-05（`nvidia-smi -L` 退出码为 0，白名单命令 `gpu-nvidia-smi-list` 新增 exit_code 取结果方式）随 REQ-002 批准，由 Agent 在 REQ-002 范围内实施。
+  3. 快照扩展节点 `taints`、`allocatable` 与 Pod `node`、`labels` 字段；输出契约新增结论取值"未运行任何规则"（退出码 0），`node_label` 无匹配节点时输出 SKIP 不影响结论，`schema_version` 升至 4。
+  4. GPU-06 暂缓。
+- 原因：GPU 交付检查的期望值须人工逐条批准（AGENTS.md 门禁）；判定类型与快照扩展属检查逻辑，随 REQ 授权实施。
+- 影响：`rules/gpu/rules.yaml`、`testdata/positive/gpu/`、`testdata/negative/gpu/`、`internal/check`、`internal/collect`、`internal/snapshot`、`cmd/kready`、`docs/design/`（rule-schema、snapshot-format、output-contract）；REQ-001、REQ-002。
+- 依据：人回复"REQ-001/REQ-002，确认是"（本次会话，2026-11-21）。
+- 决策人：kitsnail

@@ -115,22 +115,171 @@ func clusterValue(r rules.Rule, s *snapshot.Snapshot) string {
 }
 
 func runNodes(r rules.Rule, s *snapshot.Snapshot) []Result {
+	targets := nodeTargets(r, s)
+	if len(targets) == 0 && r.NodeLabel != "" {
+		// 规则声明了节点标签但无匹配节点：不适用，不判定（SKIP 不影响结论）。
+		return []Result{{ID: r.ID, Status: Skip, Target: "cluster", Actual: "无匹配节点（node_label: " + r.NodeLabel + "）"}}
+	}
+	if r.Check == "all_ready" {
+		return runPodsReady(r, s, targets)
+	}
 	var out []Result
-	for _, n := range sortedNodeNames(s) {
-		res := Result{ID: r.ID, Target: n, Expect: r.Expect["value"]}
-		val, ok := s.Nodes[n][r.Collect.Command]
-		if !ok {
-			res.Status, res.Error, res.Source = Error, "采集失败: "+r.Collect.Command, SourceCollect
+	for _, n := range targets {
+		if r.Collect != nil {
+			// 采集数据：缺键为 ERROR（采集失败）；空输出按相等比较，保持既有语义。
+			res := Result{ID: r.ID, Target: n, Expect: r.Expect["value"]}
+			val, ok := s.Nodes[n][r.Collect.Command]
+			if !ok {
+				res.Status, res.Error, res.Source = Error, "采集失败: "+r.Collect.Command, SourceCollect
+				out = append(out, res)
+				continue
+			}
+			res.Actual = strings.TrimSpace(val)
+			if r.Mode == "info" {
+				res.Status = Info
+			} else if res.Actual == res.Expect {
+				res.Status = Pass
+			} else {
+				res.Status = Fail
+			}
 			out = append(out, res)
 			continue
 		}
-		res.Actual = strings.TrimSpace(val)
+		out = append(out, judgeNodeField(r, nodeByName(s, n), n))
+	}
+	return out
+}
+
+// judgeNodeField 判定取自集群数据（field 声明）的节点级规则。
+// 集群数据缺失（字段为空）时无法判定，报 ERROR 而不是 FAIL；
+// set 例外：缺失就是被测的失败本身。
+func judgeNodeField(r rules.Rule, n snapshot.Node, name string) Result {
+	res := Result{ID: r.ID, Target: name, Actual: nodeValue(r, n)}
+	switch {
+	case r.Mode == "info":
+		res.Status = Info
+	case r.Check == "set":
+		res.Expect = "存在且非空"
+		if res.Actual != "" {
+			res.Status = Pass
+		} else {
+			res.Status, res.Actual = Fail, "（缺失）"
+		}
+	case r.Check == "equals_label":
+		// equals_label：实际值等于同节点的另一标签值，期望值逐节点取自快照。
+		expect := n.Labels[r.Expect["label"]]
+		if expect == "" {
+			res.Status, res.Error, res.Source = Error, "对比标签缺失: "+r.Expect["label"], SourceCollect
+			return res
+		}
+		res.Expect = expect
 		switch {
-		case r.Mode == "info":
-			res.Status = Info
+		case res.Actual == "":
+			res.Status, res.Error, res.Source = Error, "实际值缺失: "+r.Field, SourceCollect
+		case res.Actual == expect:
+			res.Status = Pass
+		default:
+			res.Status = Fail
+		}
+	default:
+		res.Expect = r.Expect["value"]
+		switch {
+		case res.Actual == "":
+			res.Status, res.Error, res.Source = Error, "实际值缺失: "+r.Field, SourceCollect
 		case res.Actual == res.Expect:
 			res.Status = Pass
 		default:
+			res.Status = Fail
+		}
+	}
+	return res
+}
+
+// nodeByName 在快照的节点列表中查找节点；名字来自 cluster.nodes，必定命中。
+func nodeByName(s *snapshot.Snapshot, name string) snapshot.Node {
+	for _, n := range s.Cluster.Nodes {
+		if n.Name == name {
+			return n
+		}
+	}
+	return snapshot.Node{}
+}
+
+// nodeTargets 返回规则作用的目标节点（按名排序）。规则声明 node_label 时只取匹配节点。
+func nodeTargets(r rules.Rule, s *snapshot.Snapshot) []string {
+	var names []string
+	for _, n := range sortedNodeNames(s) {
+		if r.NodeLabel == "" || nodeHasLabel(nodeByName(s, n), r.NodeLabel) {
+			names = append(names, n)
+		}
+	}
+	return names
+}
+
+// nodeHasLabel 判断节点是否带 key=value 标签。
+func nodeHasLabel(n snapshot.Node, kv string) bool {
+	key, value, ok := strings.Cut(kv, "=")
+	if !ok {
+		return false
+	}
+	v, found := n.Labels[key]
+	return found && v == value
+}
+
+// nodeValue 从集群数据取节点级实际值。取值方式由规则的 field 声明：
+//
+//	label.<key>        节点标签值
+//	allocatable.<key>  节点可分配资源量
+//	taints             节点污点列表（空为“无”，不视为缺失）
+func nodeValue(r rules.Rule, n snapshot.Node) string {
+	switch {
+	case r.Field == "taints":
+		return formatTaints(n)
+	case strings.HasPrefix(r.Field, "label."):
+		return n.Labels[strings.TrimPrefix(r.Field, "label.")]
+	case strings.HasPrefix(r.Field, "allocatable."):
+		return n.Allocatable[strings.TrimPrefix(r.Field, "allocatable.")]
+	}
+	return ""
+}
+
+// formatTaints 把污点列表格式化为 key=value:effect，逗号分隔；无污点为“无”。
+func formatTaints(n snapshot.Node) string {
+	if len(n.Taints) == 0 {
+		return "无"
+	}
+	parts := make([]string, len(n.Taints))
+	for i, t := range n.Taints {
+		parts[i] = t.Key + "=" + t.Value + ":" + t.Effect
+	}
+	sort.Strings(parts)
+	return strings.Join(parts, ",")
+}
+
+// runPodsReady 判定目标节点上匹配选择器的 Pod 全部 Ready。
+// 实际值为“Ready 数/总数”；GPU 节点上一个 Pod 都没有视为 FAIL（未部署）。
+func runPodsReady(r rules.Rule, s *snapshot.Snapshot, targets []string) []Result {
+	key, value, ok := strings.Cut(r.Expect["selector"], "=")
+	if !ok {
+		return []Result{{ID: r.ID, Status: Error, Target: "cluster", Error: "规则配置错误，选择器须为 key=value: " + r.Expect["selector"], Source: SourceToolGap}}
+	}
+	var out []Result
+	for _, name := range targets {
+		res := Result{ID: r.ID, Target: name, Expect: "全部 Ready"}
+		total, ready := 0, 0
+		for _, p := range s.Cluster.Pods {
+			if p.Node != name || p.Labels[key] != value {
+				continue
+			}
+			total++
+			if p.Ready {
+				ready++
+			}
+		}
+		res.Actual = strconv.Itoa(ready) + "/" + strconv.Itoa(total)
+		if total > 0 && ready == total {
+			res.Status = Pass
+		} else {
 			res.Status = Fail
 		}
 		out = append(out, res)
@@ -215,13 +364,17 @@ func RuleStatus(rs []Result) map[Status]int {
 	return m
 }
 
-// Conclusion 只描述集群，结论三种：
+// Conclusion 只描述集群，结论四种：
+//   - 未运行任何规则：所选规则包无 active 规则（结果为空）。不是异常，也不是工具错误。
 //   - 异常：存在 FAIL（确认不合规）。
 //   - 未能确认：无 FAIL，但存在采集失败（SourceCollect 的 ERROR），无法确认集群状态。
 //   - 正常：无 FAIL，且全部判定项已采集。
 //
-// 工具未覆盖（SourceToolGap）不影响结论。
+// 工具未覆盖（SourceToolGap）与 SKIP 不影响结论。
 func Conclusion(rs []Result) string {
+	if len(rs) == 0 {
+		return "未运行任何规则"
+	}
 	hasCollect := false
 	for _, r := range rs {
 		if r.Status == Fail {
@@ -237,10 +390,10 @@ func Conclusion(rs []Result) string {
 	return "正常"
 }
 
-// Blocking 报告结论是否使退出码为非 0：异常与未能确认都视为未通过。
+// Blocking 报告结论是否使退出码为非 0：异常与未能确认阻断；未运行任何规则与正常不阻断。
 func Blocking(rs []Result) bool {
 	c := Conclusion(rs)
-	return c != "正常"
+	return c == "异常" || c == "未能确认"
 }
 
 // String 便于调试输出。

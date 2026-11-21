@@ -19,18 +19,29 @@ type Cluster struct {
 
 // Node 是集群中的一个节点。
 type Node struct {
-	Name    string            `json:"name"`
-	Labels  map[string]string `json:"labels"`
-	Ready   bool              `json:"ready"`
-	Kubelet string            `json:"kubelet"`
+	Name        string            `json:"name"`
+	Labels      map[string]string `json:"labels"`
+	Ready       bool              `json:"ready"`
+	Kubelet     string            `json:"kubelet"`
+	Taints      []Taint           `json:"taints,omitempty"`
+	Allocatable map[string]string `json:"allocatable,omitempty"`
+}
+
+// Taint 是节点污点的最小字段。
+type Taint struct {
+	Key    string `json:"key"`
+	Value  string `json:"value"`
+	Effect string `json:"effect"`
 }
 
 // Pod 是 Pod 的最小字段。
 type Pod struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-	Ready     bool   `json:"ready"`
-	Restarts  int    `json:"restarts"`
+	Namespace string            `json:"namespace"`
+	Name      string            `json:"name"`
+	Node      string            `json:"node"`
+	Labels    map[string]string `json:"labels,omitempty"`
+	Ready     bool              `json:"ready"`
+	Restarts  int               `json:"restarts"`
 }
 
 // Snapshot 是一个完整快照：集群 + 各节点采集结果。

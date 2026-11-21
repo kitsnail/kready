@@ -60,8 +60,8 @@ func TestCheckPositiveJSON(t *testing.T) {
 		}
 	}
 	// 锁定输出契约版本：改动结论、退出码或字段语义时必须同步递增并更新此断言。
-	if d["schema_version"] != float64(3) {
-		t.Errorf("schema_version = %v，期望 3", d["schema_version"])
+	if d["schema_version"] != float64(4) {
+		t.Errorf("schema_version = %v，期望 4", d["schema_version"])
 	}
 	if d["pack"] != "2.32" || d["conclusion"] != "正常" {
 		t.Errorf("pack/conclusion 不符: %v / %v", d["pack"], d["conclusion"])
@@ -557,14 +557,36 @@ func TestToolGapSameReasonMergedToOneLine(t *testing.T) {
 	}
 }
 
-// --pack gpu：显式加载 GPU 规则包（D-012），当前无规则，输出正常，退出码 0。
+// --pack gpu：GPU 正例快照全部通过，输出正常，退出码 0（REQ-001）。
 func TestCheckPackGPU(t *testing.T) {
-	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"), "--pack", "gpu")
-	if code != 0 {
-		t.Fatalf("退出码 = %d，期望 0", code)
+	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "gpu"), "--pack", "gpu")
+	if code != exitOK {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitOK)
 	}
-	if !strings.HasPrefix(out, "正常") {
+	if !strings.HasPrefix(out, "正常\n") {
 		t.Fatalf("首行应为正常，实际输出: %q", out)
+	}
+}
+
+// --pack gpu 负例：GPU-02 FAIL（可分配数与标签不一致），退出码 1。
+func TestCheckPackGPUNegative(t *testing.T) {
+	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "negative", "gpu", "GPU-02"), "--pack", "gpu")
+	if code != exitBad {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitBad)
+	}
+	if !strings.Contains(out, "GPU-02") {
+		t.Errorf("应列出 GPU-02 的失败，实际: %s", out)
+	}
+}
+
+// --pack gpu 无 GPU 节点：所有规则 SKIP，不判定，结论正常，退出码 0（REQ-001）。
+func TestCheckPackGPUNoGPUNodes(t *testing.T) {
+	code, out, _ := runArgs(t, "check", "--snapshot", filepath.Join(testdataRoot, "positive", "2.32"), "--pack", "gpu")
+	if code != exitOK {
+		t.Fatalf("退出码 = %d，期望 %d", code, exitOK)
+	}
+	if !strings.HasPrefix(out, "正常\n") {
+		t.Fatalf("无 GPU 节点应 SKIP 且结论正常，实际: %q", out)
 	}
 }
 

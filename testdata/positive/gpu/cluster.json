@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {"name": "cp-1", "labels": {"node-role.kubernetes.io/control-plane": ""}, "ready": true, "kubelet": "v1.36.4"},
+    {"name": "gpu-1", "labels": {"nvidia.com/gpu.present": "true", "nvidia.com/gpu.count": "8"}, "ready": true, "kubelet": "v1.36.4", "taints": [{"key": "nvidia.com/gpu", "value": "true", "effect": "NoSchedule"}], "allocatable": {"nvidia.com/gpu": "8"}},
+    {"name": "gpu-2", "labels": {"nvidia.com/gpu.present": "true", "nvidia.com/gpu.count": "8"}, "ready": true, "kubelet": "v1.36.4", "allocatable": {"nvidia.com/gpu": "8"}}
+  ],
+  "pods": [
+    {"namespace": "kube-system", "name": "nvidia-device-plugin-gpu-1", "node": "gpu-1", "labels": {"app.kubernetes.io/name": "nvidia-device-plugin"}, "ready": true, "restarts": 0},
+    {"namespace": "kube-system", "name": "nvidia-device-plugin-gpu-2", "node": "gpu-2", "labels": {"app.kubernetes.io/name": "nvidia-device-plugin"}, "ready": true, "restarts": 0}
+  ],
+  "config": {}
+}

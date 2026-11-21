@@ -9,15 +9,21 @@ import (
 	"github.com/kitsnail/kready/internal/snapshot"
 )
 
-// liveSnapshot 只通过 kubectl 取节点清单，用于选包。此时不发起 SSH 连接。
+// liveSnapshot 通过 kubectl 取节点与 Pod 清单，用于选包与集群级判定。此时不发起 SSH 连接。
 // 返回的 nodes 用于后续采集，保证选包与采集基于同一份清单。
 func liveSnapshot() (*snapshot.Snapshot, []collect.Node, error) {
 	nodes, err := collect.ListNodes()
 	if err != nil {
 		return nil, nil, err
 	}
+	pods, err := collect.ListPods()
+	if err != nil {
+		return nil, nil, err
+	}
+	cluster := collect.ClusterFromNodes(nodes)
+	cluster.Pods = collect.PodsFromList(pods)
 	return &snapshot.Snapshot{
-		Cluster: collect.ClusterFromNodes(nodes),
+		Cluster: cluster,
 		Nodes:   map[string]map[string]string{},
 	}, nodes, nil
 }

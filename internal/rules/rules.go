@@ -34,6 +34,9 @@ type Rule struct {
 	Field   string            `yaml:"field,omitempty"`
 	Check   string            `yaml:"check,omitempty"`
 	Expect  map[string]string `yaml:"expect,omitempty"`
+	// NodeLabel（可选，node 级）：形如 key=value，规则只作用于带该标签的节点。
+	// 无匹配节点时输出一条 SKIP，不判定（见 output-contract.md）。
+	NodeLabel string `yaml:"node_label,omitempty"`
 	// Impact、Hint 为占位，内容待逐项研究确定后填写。空值不输出，不编造内容。
 	Impact string `yaml:"impact,omitempty"`
 	Hint   string `yaml:"hint,omitempty"`

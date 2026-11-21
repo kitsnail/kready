@@ -13,63 +13,76 @@ import (
 // testdata 位于仓库根，测试在 internal/check 下运行，需回到根目录。
 const testdataRoot = "../../testdata"
 
-func loadPack(t *testing.T) *rules.Pack {
+// allPacks 是参与样本测试的全部规则包。新增规则包时在此登记。
+func allPacks() []string {
+	return []string{"2.32", "gpu"}
+}
+
+func loadPack(t *testing.T, name string) *rules.Pack {
 	t.Helper()
-	p, err := rules.Load("2.32")
+	p, err := rules.Load(name)
 	if err != nil {
-		t.Fatalf("加载规则包: %v", err)
+		t.Fatalf("加载规则包 %s: %v", name, err)
 	}
 	return p
 }
 
 // 正例：全部 active 规则通过，结论为正常。
 func TestPositiveSnapshotIsNormal(t *testing.T) {
-	p := loadPack(t)
-	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "2.32"))
-	if err != nil {
-		t.Fatalf("加载正例快照: %v", err)
-	}
-	results := check.Run(p, s)
-	if got := check.Conclusion(results); got != "正常" {
-		t.Errorf("结论 = %q，期望 正常；结果: %v", got, results)
-	}
-	for _, r := range results {
-		if r.Status == check.Fail || r.Status == check.Error {
-			t.Errorf("正例不应出现 %s: %v", r.Status, r)
-		}
+	for _, name := range allPacks() {
+		t.Run(name, func(t *testing.T) {
+			p := loadPack(t, name)
+			s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", name))
+			if err != nil {
+				t.Fatalf("加载正例快照: %v", err)
+			}
+			results := check.Run(p, s)
+			if got := check.Conclusion(results); got != "正常" {
+				t.Errorf("结论 = %q，期望 正常；结果: %v", got, results)
+			}
+			for _, r := range results {
+				if r.Status == check.Fail || r.Status == check.Error {
+					t.Errorf("正例不应出现 %s: %v", r.Status, r)
+				}
+			}
+		})
 	}
 }
 
 // 负例：每条 active judge 规则的负例快照必须报出该规则的 FAIL，结论为异常。
 func TestNegativeSnapshotsReportTheirRule(t *testing.T) {
-	p := loadPack(t)
-	for _, rule := range p.Active() {
-		if rule.Mode != "judge" {
-			continue
-		}
-		dir := filepath.Join(testdataRoot, "negative", "2.32", rule.ID)
-		if _, err := os.Stat(dir); err != nil {
-			t.Errorf("规则 %s 缺少负例快照: %v", rule.ID, err)
-			continue
-		}
-		t.Run(rule.ID, func(t *testing.T) {
-			s, err := snapshot.Load(dir)
-			if err != nil {
-				t.Fatalf("加载负例: %v", err)
-			}
-			results := check.Run(p, s)
-			if got := check.Conclusion(results); got != "异常" {
-				t.Errorf("结论 = %q，期望 异常", got)
-			}
-			found := false
-			for _, r := range results {
-				if r.ID == rule.ID && r.Status == check.Fail {
-					found = true
-					break
+	for _, name := range allPacks() {
+		t.Run(name, func(t *testing.T) {
+			p := loadPack(t, name)
+			for _, rule := range p.Active() {
+				if rule.Mode != "judge" {
+					continue
 				}
-			}
-			if !found {
-				t.Errorf("负例未报 %s 的 FAIL；结果: %v", rule.ID, results)
+				dir := filepath.Join(testdataRoot, "negative", name, rule.ID)
+				if _, err := os.Stat(dir); err != nil {
+					t.Errorf("规则 %s 缺少负例快照: %v", rule.ID, err)
+					continue
+				}
+				t.Run(rule.ID, func(t *testing.T) {
+					s, err := snapshot.Load(dir)
+					if err != nil {
+						t.Fatalf("加载负例: %v", err)
+					}
+					results := check.Run(p, s)
+					if got := check.Conclusion(results); got != "异常" {
+						t.Errorf("结论 = %q，期望 异常", got)
+					}
+					found := false
+					for _, r := range results {
+						if r.ID == rule.ID && r.Status == check.Fail {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("负例未报 %s 的 FAIL；结果: %v", rule.ID, results)
+					}
+				})
 			}
 		})
 	}
@@ -78,17 +91,60 @@ func TestNegativeSnapshotsReportTheirRule(t *testing.T) {
 // 规则 ID 不重复（AGENTS.md：规则 ID 不复用）。
 func TestRuleIDsUnique(t *testing.T) {
 	seen := map[string]bool{}
-	for _, r := range loadPack(t).Rules {
-		if seen[r.ID] {
-			t.Errorf("规则 ID 重复: %s", r.ID)
+	for _, name := range allPacks() {
+		for _, r := range loadPack(t, name).Rules {
+			if seen[r.ID] {
+				t.Errorf("规则 ID 重复: %s", r.ID)
+			}
+			seen[r.ID] = true
 		}
-		seen[r.ID] = true
+	}
+}
+
+// 规则包无 active 规则：结果为空，结论「未运行任何规则」，退出码不阻断（REQ-001 标准 5）。
+func TestNoActiveRulesRunsNothing(t *testing.T) {
+	p := loadPack(t, "gpu")
+	// 只留 draft 规则，模拟无 active 规则的规则包。
+	for i := range p.Rules {
+		p.Rules[i].Status = "draft"
+	}
+	results := check.Run(p, &snapshot.Snapshot{})
+	if len(results) != 0 {
+		t.Fatalf("无 active 规则时结果应为空，实际: %v", results)
+	}
+	if got := check.Conclusion(results); got != "未运行任何规则" {
+		t.Errorf("结论 = %q，期望 未运行任何规则", got)
+	}
+	if check.Blocking(results) {
+		t.Error("未运行任何规则不应阻断")
+	}
+}
+
+// 声明了 node_label 的规则在无匹配节点时输出 SKIP，不影响结论（REQ-001）。
+func TestNodeLabelNoMatchIsSkip(t *testing.T) {
+	p := loadPack(t, "gpu")
+	// 复用 2.32 正例快照：其中没有 nvidia.com/gpu.present 节点。
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "2.32"))
+	if err != nil {
+		t.Fatalf("加载快照: %v", err)
+	}
+	results := check.Run(p, s)
+	if len(results) == 0 {
+		t.Fatal("无匹配节点时应输出 SKIP，而不是空结果")
+	}
+	for _, r := range results {
+		if r.Status != check.Skip {
+			t.Errorf("无 GPU 节点时所有规则应为 SKIP，得到 %v", r)
+		}
+	}
+	if got := check.Conclusion(results); got != "正常" {
+		t.Errorf("结论 = %q，期望 正常（SKIP 不影响结论）", got)
 	}
 }
 
 // 信息项缺值必须报 ERROR，不得输出空的当前值。
 func TestInfoMissingValueIsError(t *testing.T) {
-	p := loadPack(t)
+	p := loadPack(t, "2.32")
 	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "2.32"))
 	if err != nil {
 		t.Fatalf("加载正例快照: %v", err)
@@ -116,7 +172,7 @@ func TestInfoMissingValueIsError(t *testing.T) {
 
 // 节点采集文件缺失必须报 ERROR，不得因漏判输出"正常"。
 func TestMissingNodeFileIsError(t *testing.T) {
-	p := loadPack(t)
+	p := loadPack(t, "2.32")
 	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "2.32"))
 	if err != nil {
 		t.Fatalf("加载正例快照: %v", err)

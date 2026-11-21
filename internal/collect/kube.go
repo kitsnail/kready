@@ -5,15 +5,19 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/kitsnail/kready/internal/snapshot"
 )
 
 // Node 是 kubectl 返回的节点最小信息。
 type Node struct {
-	Name    string
-	IP      string
-	Labels  map[string]string
-	Kubelet string
-	Ready   bool
+	Name        string
+	IP          string
+	Labels      map[string]string
+	Kubelet     string
+	Ready       bool
+	Taints      []snapshot.Taint
+	Allocatable map[string]string
 }
 
 // kubeNodeList 是 `kubectl get nodes -o json` 的解析结构（只取所需字段）。
@@ -23,6 +27,9 @@ type kubeNodeList struct {
 			Name   string            `json:"name"`
 			Labels map[string]string `json:"labels"`
 		} `json:"metadata"`
+		Spec struct {
+			Taints []snapshot.Taint `json:"taints"`
+		} `json:"spec"`
 		Status struct {
 			Addresses []struct {
 				Type    string `json:"type"`
@@ -31,7 +38,8 @@ type kubeNodeList struct {
 			NodeInfo struct {
 				KubeletVersion string `json:"kubeletVersion"`
 			} `json:"nodeInfo"`
-			Conditions []struct {
+			Allocatable map[string]string `json:"allocatable"`
+			Conditions  []struct {
 				Type   string `json:"type"`
 				Status string `json:"status"`
 			} `json:"conditions"`
@@ -70,9 +78,11 @@ func ParseNodes(data []byte) ([]Node, error) {
 	var nodes []Node
 	for _, it := range list.Items {
 		n := Node{
-			Name:    it.Metadata.Name,
-			Labels:  it.Metadata.Labels,
-			Kubelet: it.Status.NodeInfo.KubeletVersion,
+			Name:        it.Metadata.Name,
+			Labels:      it.Metadata.Labels,
+			Kubelet:     it.Status.NodeInfo.KubeletVersion,
+			Taints:      it.Spec.Taints,
+			Allocatable: it.Status.Allocatable,
 		}
 		for _, a := range it.Status.Addresses {
 			if a.Type == "InternalIP" {
@@ -90,4 +100,64 @@ func ParseNodes(data []byte) ([]Node, error) {
 		nodes = append(nodes, n)
 	}
 	return nodes, nil
+}
+
+// kubePodList 是 `kubectl get pods -A -o json` 的解析结构（只取所需字段）。
+type kubePodList struct {
+	Items []struct {
+		Metadata struct {
+			Namespace string            `json:"namespace"`
+			Name      string            `json:"name"`
+			Labels    map[string]string `json:"labels"`
+		} `json:"metadata"`
+		Spec struct {
+			NodeName string `json:"nodeName"`
+		} `json:"spec"`
+		Status struct {
+			Conditions []struct {
+				Type   string `json:"type"`
+				Status string `json:"status"`
+			} `json:"conditions"`
+			ContainerStatuses []struct {
+				RestartCount int `json:"restartCount"`
+			} `json:"containerStatuses"`
+		} `json:"status"`
+	} `json:"items"`
+}
+
+// ListPods 通过 kubectl 只读获取全部命名空间的 Pod 清单。只使用 get，不写入集群。
+func ListPods() ([]snapshot.Pod, error) {
+	out, err := Kubectl("get", "pods", "-A", "-o", "json")
+	if err != nil {
+		return nil, err
+	}
+	return ParsePods(out)
+}
+
+// ParsePods 将 `kubectl get pods -A -o json` 输出解析为 Pod 清单。
+// Ready 取 Ready 条件；重启数为各容器重启数之和。
+func ParsePods(data []byte) ([]snapshot.Pod, error) {
+	var list kubePodList
+	if err := json.Unmarshal(data, &list); err != nil {
+		return nil, fmt.Errorf("解析 Pod 清单失败: %w", err)
+	}
+	pods := make([]snapshot.Pod, 0, len(list.Items))
+	for _, it := range list.Items {
+		p := snapshot.Pod{
+			Namespace: it.Metadata.Namespace,
+			Name:      it.Metadata.Name,
+			Node:      it.Spec.NodeName,
+			Labels:    it.Metadata.Labels,
+		}
+		for _, c := range it.Status.Conditions {
+			if c.Type == "Ready" && c.Status == "True" {
+				p.Ready = true
+			}
+		}
+		for _, cs := range it.Status.ContainerStatuses {
+			p.Restarts += cs.RestartCount
+		}
+		pods = append(pods, p)
+	}
+	return pods, nil
 }

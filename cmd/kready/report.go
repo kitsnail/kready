@@ -11,7 +11,8 @@ import (
 // schemaVersion 是 JSON 输出的契约版本，见 docs/design/output-contract.md。
 // 版本 2：结论新增“未能确认”，退出码 1 含义扩展为异常或未能确认（MAJOR 变更）。
 // 版本 3：summary 改名为 rules（按规则计数），按结果计数改名为 results_by_status。
-const schemaVersion = 3
+// 版本 4：结论新增“未运行任何规则”（退出码 0）；SKIP 不影响结论（REQ-001）。
+const schemaVersion = 4
 
 // report 是 JSON 输出的结构，字段与输出契约一致。
 type report struct {
