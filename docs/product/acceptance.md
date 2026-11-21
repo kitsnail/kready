@@ -48,3 +48,46 @@
 - [x] 标准 3：匹配到的 Pod 任一未 Ready 判「异常」（FAIL）（既有语义不变）。
 
 验收人：kitsnail　日期：2026-11-21
+
+## REQ-004 控制面规模与组件检查（CP-02～CP-05）
+
+- [ ] 标准 1：CP-02：etcd 成员数为 3，判「正常」；不为 3，判「异常」（FAIL，列出实际成员数）。
+- [ ] 标准 2：CP-03：kube-apiserver、kube-controller-manager、kube-scheduler 的 Pod 数各等于控制面节点数且全部 Ready；任一数量不符或未 Ready，判「异常」。
+- [ ] 标准 3：CP-04：kube-vip Pod 数（含镜像 Pod）等于控制面节点数；不符判「异常」。
+- [ ] 标准 4：CP-05：nginx-proxy Pod 数（含镜像 Pod）等于工作节点数；不符判「异常」。
+- [ ] 标准 5：CP-02～05 各有负例快照，报出对应规则的 FAIL（`testdata/negative/`）。
+
+## REQ-005 控制面资源配置检查（CP-06～CP-07）
+
+- [ ] 标准 1：CP-06：kube-controller-manager 内存 request 与 limit 均已设置；任一缺失判「异常」。
+- [ ] 标准 2：CP-07：kube-controller-manager startupProbe 已配置；缺失判「异常」。
+- [ ] 标准 3：CP-06～07 各有负例快照，报出对应规则的 FAIL。
+
+## REQ-006 系统组件健康检查（SYS-01～SYS-03）
+
+- [ ] 标准 1：SYS-01：kube-system 全部 Pod Ready 且无 CrashLoopBackOff；任一不满足判「异常」（列出问题 Pod）。
+- [ ] 标准 2：SYS-02：kube-system Pod 近 15 分钟容器重启 0 次；任一重启次数非 0 判「异常」（列出 Pod 与次数）。
+- [ ] 标准 3：SYS-03：Cilium、kube-proxy、nodelocaldns 三个 DaemonSet 在每个节点各有一个 Ready Pod；缺失或未 Ready 判「异常」。
+- [ ] 标准 4：SYS-01～03 各有负例快照，报出对应规则的 FAIL。
+
+## REQ-007 NTP 结果判定（POL-03a/POL-03b）
+
+- [ ] 标准 1：POL-03a：每节点 NTP 同步状态 = `yes`；任一节点非 `yes` 判「异常」（列出节点与实际状态）。
+- [ ] 标准 2：POL-03b：节点间时钟偏差（epoch 毫秒 max−min）≤ `1000`；超限判「异常」（列出偏差值）。
+- [ ] 标准 3：NTP 服务器地址与配置不在检查范围（无对应规则字段）。
+- [ ] 标准 4：POL-03a/b 各有负例快照，报出对应规则的 FAIL。
+- [ ] 标准 5：白名单仅新增 `timedatectl-ntp-sync`（`timedatectl show --property=NTPSynchronization --value`）与 `date-epoch-ms`（`date +%s%3N`）两条只读命令。
+
+## REQ-008 OS 内核参数检查（OS-01～OS-03）
+
+- [ ] 标准 1：OS-01：节点 `br_netfilter` 模块已加载；未加载判「异常」。
+- [ ] 标准 2：OS-02：节点 `net.ipv4.ip_forward = 1`；不符判「异常」（列出实际值）。
+- [ ] 标准 3：OS-03：节点 swap 已关闭；未关闭判「异常」。
+- [ ] 标准 4：OS-01～03 各有负例快照，报出对应规则的 FAIL。
+- [ ] 标准 5：白名单新增命令均为只读（具体命令清单在 B 类方案中列出并经人批准）。
+
+## REQ-009 节点就绪与证书续期检查（NODE-01、POL-01）
+
+- [ ] 标准 1：NODE-01：每个节点 Ready；任一未 Ready 判「异常」（列出节点与状态）。
+- [ ] 标准 2：POL-01：证书自动续期为 `false`；为 `true` 判「异常」（列出实际值）。
+- [ ] 标准 3：NODE-01 与 POL-01 各有负例快照，报出对应规则的 FAIL。

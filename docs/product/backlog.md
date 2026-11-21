@@ -46,3 +46,57 @@
 - 期望结果：GPU Operator 与独立 Helm 两种部署方式下，GPU-01 均能正确判定 device plugin 就绪状态。
 - 验收标准：见 `acceptance.md` 中的 REQ-003
 - 关联：GPU-01、D-014、D-015、PR #24
+
+### REQ-004 控制面规模与组件检查（CP-02～CP-05）
+
+- 状态：草稿
+- 优先级：高
+- 背景：草案 CP-02～05（etcd 成员数 3、apiserver/kcm/scheduler Pod 数等于控制面节点数且全部 Ready、kube-vip 与 nginx-proxy 镜像 Pod 数）已定稿且采集路径清晰（快照 Pod 清单 + 节点角色标签），但未实现，控制面规模缺陷目前检不出。
+- 期望结果：`kready check` 对 CP-02～05 报出判定结果；控制面规模或组件 Pod 异常时报 FAIL 并列出实际值与期望值。
+- 验收标准：见 `acceptance.md` 中的 REQ-004
+- 关联：CP-02、CP-03、CP-04、CP-05（规则条目与期望值需人批准后写入 `rules/`）
+
+### REQ-005 控制面资源配置检查（CP-06～CP-07）
+
+- 状态：草稿
+- 优先级：高
+- 背景：草案 CP-06～07（kcm 内存 request/limit 均设置、kcm startupProbe 已配置）需快照扩展 Deployment/Pod 资源字段，实现后控制面资源配置缺陷可自动检出。CP-08 已实现（快照离线判定可用），但 live 采集的集群级 config 无来源（`internal/collect/live.go` 留空），线上运行报 ERROR，补齐 config 采集另立需求。
+- 期望结果：`kready check` 对 CP-06～07 报出判定结果；资源配置缺失时报 FAIL。
+- 验收标准：见 `acceptance.md` 中的 REQ-005
+- 关联：CP-06、CP-07（规则条目与期望值需人批准后写入 `rules/`）
+
+### REQ-006 系统组件健康检查（SYS-01～SYS-03）
+
+- 状态：草稿
+- 优先级：高
+- 背景：草案 SYS-01～03（kube-system Pod 全部 Ready 无 CrashLoopBackOff、近 15 分钟容器重启 0 次、Cilium/kube-proxy/nodelocaldns DaemonSet 每节点一个 Pod 且 Ready）是交付验收最直接的信号，目前未实现。
+- 期望结果：`kready check` 对 SYS-01～03 报出判定结果；系统 Pod 异常、重启或 DaemonSet 缺副本时报 FAIL。
+- 验收标准：见 `acceptance.md` 中的 REQ-006
+- 关联：SYS-01、SYS-02、SYS-03（规则条目与期望值需人批准后写入 `rules/`）
+
+### REQ-007 NTP 结果判定（POL-03a/POL-03b）
+
+- 状态：草稿
+- 优先级：中
+- 背景：D-017 裁定 POL-03 采用结果判定：POL-03a 每节点 NTP 同步状态 = `yes`，POL-03b 节点间时钟偏差 ≤ `1000ms`；需白名单新增 2 条命令（`timedatectl show --property=NTPSynchronization --value`、`date +%s%3N`）与新判定类型（节点间 max−min）。
+- 期望结果：NTP 未同步的节点报 FAIL（POL-03a）；节点间时钟偏差超 1000ms 报 FAIL 并列出偏差值（POL-03b）；NTP 服务器地址不检查。
+- 验收标准：见 `acceptance.md` 中的 REQ-007
+- 关联：POL-03a、POL-03b、D-017（白名单命令与期望值需人批准）
+
+### REQ-008 OS 内核参数检查（OS-01～OS-03）
+
+- 状态：草稿
+- 优先级：中
+- 背景：D-017 裁定纳入 OS 内核参数检查：OS-01 `br_netfilter` 已加载、OS-02 `net.ipv4.ip_forward=1`、OS-03 swap 关闭；需白名单新增命令（`lsmod`/`sysctl`/`swapon --show` 或等价只读方式）。
+- 期望结果：模块未加载、转发未开启或 swap 未关闭时报 FAIL 并列出实际值与期望值。
+- 验收标准：见 `acceptance.md` 中的 REQ-008
+- 关联：OS-01、OS-02、OS-03、D-017（采集命令与期望值需人批准）
+
+### REQ-009 节点就绪与证书续期检查（NODE-01、POL-01）
+
+- 状态：草稿
+- 优先级：中
+- 背景：NODE-01（节点 Ready）与 POL-01（证书自动续期 `false`，D-017 已裁定期望值）尚未实现；POL-02（CoreDNS 上游与 inventory 一致）涉及 inventory 对比方案，待 REQ-004～008 落地后另行评估。
+- 期望结果：`kready check` 对 NODE-01 与 POL-01 报出判定结果；节点未 Ready 或证书续期开启时报 FAIL。
+- 验收标准：见 `acceptance.md` 中的 REQ-009
+- 关联：NODE-01、POL-01、D-017（POL-01 期望值已裁定；规则条目写入 `rules/` 需人批准）

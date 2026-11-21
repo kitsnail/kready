@@ -6,6 +6,7 @@
 
 ### Notes
 - 决策留痕：补记 D-017（POL-01 统一 `false`；POL-03 结果判定拆 03a/03b；OS 内核参数 OS-01～03 纳入草案；NODE-05 维持 info）。
+- 需求起草：REQ-004～009 草稿（控制面 CP-02～07、系统组件 SYS-01～03、NTP POL-03a/b、OS 参数 OS-01～03、NODE-01 与 POL-01），待人确认。
 
 ## [0.1.1](https://github.com/kitsnail/kready/compare/v0.1.0...v0.1.1) (2026-11-21)
 
