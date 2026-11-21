@@ -111,3 +111,11 @@
 - 影响：`rules/embed.go`、`rules/gpu/rules.yaml`、`cmd/kready`（`--pack` 参数）；缺省 `--pack` 时选包行为不变。
 - 依据：PR #17（提交 `c6d6dd3`，正文已引用 D-012 并注明"人已同意"）；本条为补记。
 - 决策人：kitsnail
+
+### D-013 PR 模板新增独立审查栏位（2026-11-21）
+
+- 决策：`.github/pull_request_template.md` 新增「独立审查（D-011）」栏位，字段为审查者、结论（approve / request changes）、意见。
+- 原因：D-011 合并条件要求"审查结论写入 PR 描述"，但模板无对应栏位，审查留痕缺固定承载位置。
+- 影响：`.github/pull_request_template.md`（门禁文件）；不改变 CI 检查逻辑。
+- 依据：人指示按"闭环三事项"逐个执行，本项为其中第二项（本次会话，2026-11-21）。
+- 决策人：kitsnail

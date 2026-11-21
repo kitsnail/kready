@@ -11,7 +11,7 @@
 - 决策留痕：补记 D-012（PR #17 正文已引用，此前未入册）；起草 REQ-001、REQ-002（GPU 检查需求，草稿待人确认）。
 - Agent 自主推进（D-011）：AGENTS.md 新增 REQ 确认后的 A 类授权（检查逻辑）、独立审查合并条件、澄清/自动推进/升级三条工作方式；`docs/product/README.md` 新增字段级权限。`rules/`、`testdata/` 期望值仍须人工批准。
 - CI 门禁（方案 B、C）：修改 `Makefile`、`.github/`、`.githooks/`、`rules/`、`testdata/` 的 PR 须在正文引用 `D-nnn`；修改 `internal/`、`cmd/`、`rules/` 的 PR 须同时更新 `CHANGELOG.md`。仅对 `pull_request` 事件生效。
-- PR 模板（`.github/pull_request_template.md`）：要求写明范围、门禁文件与引用的 `D-nnn`、CHANGELOG 状态与 `make check` 结果。
+- PR 模板（`.github/pull_request_template.md`）：要求写明范围、门禁文件与引用的 `D-nnn`、CHANGELOG 状态、独立审查结论（D-013）与 `make check` 结果。
 - 重构（无行为变化）：删除仅做状态过滤的包装函数 `writeGroups`，统一调用 `writeGroupsOf`；修正 `writeReport` 注释错位。文本输出与退出码经全部样本比对一致。
 - Agent 编码约束（D-010）：AGENTS.md 新增依赖方向（`internal/check` 不 import `internal/collect`）、先复用公共函数、命名三条规则。
 - 仓库迁移至 `kitsnail/kready`，Go 模块路径同步改为 `github.com/kitsnail/kready`（`go.mod` 与全部 import）。旧仓库 `scclabs/kready` 已删除。
