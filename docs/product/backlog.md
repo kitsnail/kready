@@ -40,9 +40,9 @@
 
 ### REQ-003 GPU-01 适配 GPU Operator 部署
 
-- 状态：进行中
+- 状态：待验收
 - 优先级：高
 - 背景：GPU-01 选择器只覆盖独立 Helm 部署的 device plugin，GPU Operator 集群误报「未部署 FAIL」（sd1 测试环境实测复现）。
 - 期望结果：GPU Operator 与独立 Helm 两种部署方式下，GPU-01 均能正确判定 device plugin 就绪状态。
 - 验收标准：见 `acceptance.md` 中的 REQ-003
-- 关联：GPU-01、D-014、D-015
+- 关联：GPU-01、D-014、D-015、PR #24
