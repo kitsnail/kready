@@ -59,6 +59,14 @@ func Run(p *rules.Pack, s *snapshot.Snapshot) []Result {
 				out = append(out, withTitle(runBaseline(r, s), r))
 				continue
 			}
+			if r.Check == "control_plane_pods_ready" {
+				out = append(out, withTitle(runControlPlanePodsReady(r, s), r))
+				continue
+			}
+			if r.Check == "count_eq_nodes" {
+				out = append(out, withTitle(runCountEqNodes(r, s), r))
+				continue
+			}
 			out = append(out, withTitle(runCluster(r, s), r))
 		case "node":
 			for _, res := range runNodes(r, s) {
@@ -104,14 +112,126 @@ func runCluster(r rules.Rule, s *snapshot.Snapshot) Result {
 //	config.<key>   读取 cluster.json 的 config[key]
 //	kubelet_versions 全部节点 kubelet 版本（去重）
 //	count_role     按 expect.role 计数节点数
+//	pods           按 expect.selectors / pod_prefix 计数 Pod 数
 func clusterValue(r rules.Rule, s *snapshot.Snapshot) string {
 	switch {
 	case r.Field == "count_role":
 		return strconv.Itoa(countNodes(s, r.Expect["role"]))
+	case r.Field == "pods" && r.Check == "count":
+		return strconv.Itoa(countMatchingPods(s, r))
 	case strings.HasPrefix(r.Field, "config."):
 		return s.Cluster.Config[strings.TrimPrefix(r.Field, "config.")]
 	}
 	return ""
+}
+
+func countMatchingPods(s *snapshot.Snapshot, r rules.Rule) int {
+	var sels [][2]string
+	if selsStr := r.Expect["selectors"]; selsStr != "" {
+		sels, _ = parseSelectors(selsStr)
+	}
+	prefix := r.Expect["pod_prefix"]
+	ns := r.Expect["namespace"]
+	if ns == "" {
+		ns = "kube-system"
+	}
+	count := 0
+	for _, p := range s.Cluster.Pods {
+		if p.Namespace != "" && p.Namespace != ns {
+			continue
+		}
+		if matchPod(p, sels, prefix) {
+			count++
+		}
+	}
+	return count
+}
+
+func matchPod(p snapshot.Pod, sels [][2]string, prefix string) bool {
+	if len(sels) > 0 && matchAnySelector(p.Labels, sels) {
+		return true
+	}
+	if prefix != "" && strings.HasPrefix(p.Name, prefix) {
+		return true
+	}
+	return false
+}
+
+func runCountEqNodes(r rules.Rule, s *snapshot.Snapshot) Result {
+	res := Result{ID: r.ID, Target: "cluster"}
+	role := r.Expect["role"]
+	expectedCount := 0
+	switch role {
+	case "control-plane":
+		expectedCount = countNodes(s, "control-plane")
+	case "worker":
+		expectedCount = countWorkerNodes(s)
+	default:
+		res.Status, res.Error, res.Source = Error, "未知节点角色: "+role, SourceToolGap
+		return res
+	}
+	res.Expect = strconv.Itoa(expectedCount)
+	actualCount := countMatchingPods(s, r)
+	res.Actual = strconv.Itoa(actualCount)
+	if actualCount == expectedCount {
+		res.Status = Pass
+	} else {
+		res.Status = Fail
+	}
+	return res
+}
+
+func countWorkerNodes(s *snapshot.Snapshot) int {
+	c := 0
+	for _, n := range s.Cluster.Nodes {
+		if !isControlPlane(n) {
+			c++
+		}
+	}
+	return c
+}
+
+func runControlPlanePodsReady(r rules.Rule, s *snapshot.Snapshot) Result {
+	res := Result{ID: r.ID, Target: "cluster"}
+	cpCount := countNodes(s, "control-plane")
+	res.Expect = fmt.Sprintf("各 %d 个全部 Ready", cpCount)
+
+	components := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
+	if compStr := r.Expect["components"]; compStr != "" {
+		components = strings.Split(compStr, ",")
+	}
+
+	allOk := true
+	var parts []string
+
+	for _, comp := range components {
+		total := 0
+		ready := 0
+		for _, p := range s.Cluster.Pods {
+			if p.Namespace != "" && p.Namespace != "kube-system" {
+				continue
+			}
+			if p.Labels["component"] == comp || strings.HasPrefix(p.Name, comp+"-") {
+				total++
+				if p.Ready {
+					ready++
+				}
+			}
+		}
+		if total != cpCount || ready != cpCount {
+			allOk = false
+		}
+		parts = append(parts, fmt.Sprintf("%s: %d/%d Ready", comp, ready, total))
+	}
+
+	if allOk && cpCount > 0 {
+		res.Actual = fmt.Sprintf("各 %d 个全部 Ready", cpCount)
+		res.Status = Pass
+	} else {
+		res.Actual = strings.Join(parts, ", ")
+		res.Status = Fail
+	}
+	return res
 }
 
 func runNodes(r rules.Rule, s *snapshot.Snapshot) []Result {

@@ -281,3 +281,148 @@ func TestAllReadyInvalidSelectorIsError(t *testing.T) {
 		t.Errorf("非法选择器应报 ERROR（tool-gap），得到 %+v", r)
 	}
 }
+
+// REQ-004: CP-02 etcd 成员数为 3 判 PASS，非 3 判 FAIL。
+func TestCP02EtcdMemberCount(t *testing.T) {
+	p := &rules.Pack{Pack: "2.32", Rules: []rules.Rule{{
+		ID: "CP-02", Title: "etcd 成员数", Status: "active", Mode: "judge", Scope: "cluster",
+		Field: "pods", Check: "count",
+		Expect: map[string]string{"value": "3", "selectors": "component=etcd,k8s-app=etcd", "pod_prefix": "etcd-"},
+	}}}
+	s := &snapshot.Snapshot{
+		Cluster: snapshot.Cluster{
+			Pods: []snapshot.Pod{
+				{Namespace: "kube-system", Name: "etcd-cp-1", Labels: map[string]string{"component": "etcd"}},
+				{Namespace: "kube-system", Name: "etcd-cp-2", Labels: map[string]string{"component": "etcd"}},
+				{Namespace: "kube-system", Name: "etcd-cp-3", Labels: map[string]string{"component": "etcd"}},
+			},
+		},
+	}
+	results := check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Pass || results[0].Actual != "3" {
+		t.Fatalf("3 个 etcd 成员应 PASS，得到: %+v", results)
+	}
+
+	// 负例：只有 2 个 etcd 成员 -> FAIL
+	s.Cluster.Pods = s.Cluster.Pods[:2]
+	results = check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Fail || results[0].Actual != "2" {
+		t.Fatalf("2 个 etcd 成员应 FAIL，得到: %+v", results)
+	}
+}
+
+// REQ-004: CP-03 apiserver / kcm / scheduler Pod 数各等于控制面节点数且全部 Ready。
+func TestCP03ControlPlanePodsReady(t *testing.T) {
+	p := &rules.Pack{Pack: "2.32", Rules: []rules.Rule{{
+		ID: "CP-03", Title: "apiserver / kcm / scheduler Pod 数与就绪状态", Status: "active", Mode: "judge", Scope: "cluster",
+		Field: "pods", Check: "control_plane_pods_ready",
+		Expect: map[string]string{"role": "control-plane", "components": "kube-apiserver,kube-controller-manager,kube-scheduler"},
+	}}}
+	s := &snapshot.Snapshot{
+		Cluster: snapshot.Cluster{
+			Nodes: []snapshot.Node{
+				{Name: "cp-1", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+				{Name: "cp-2", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+				{Name: "cp-3", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+			},
+			Pods: []snapshot.Pod{
+				{Namespace: "kube-system", Name: "kube-apiserver-cp-1", Labels: map[string]string{"component": "kube-apiserver"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-apiserver-cp-2", Labels: map[string]string{"component": "kube-apiserver"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-apiserver-cp-3", Labels: map[string]string{"component": "kube-apiserver"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-controller-manager-cp-1", Labels: map[string]string{"component": "kube-controller-manager"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-controller-manager-cp-2", Labels: map[string]string{"component": "kube-controller-manager"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-controller-manager-cp-3", Labels: map[string]string{"component": "kube-controller-manager"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-scheduler-cp-1", Labels: map[string]string{"component": "kube-scheduler"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-scheduler-cp-2", Labels: map[string]string{"component": "kube-scheduler"}, Ready: true},
+				{Namespace: "kube-system", Name: "kube-scheduler-cp-3", Labels: map[string]string{"component": "kube-scheduler"}, Ready: true},
+			},
+		},
+	}
+	results := check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Pass {
+		t.Fatalf("控制面核心组件全部 3/3 Ready 应 PASS，得到: %+v", results)
+	}
+
+	// 负例 1: kcm 未全部 Ready -> FAIL
+	s.Cluster.Pods[5].Ready = false
+	results = check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Fail {
+		t.Fatalf("kcm 存在未 Ready 时应 FAIL，得到: %+v", results)
+	}
+
+	// 负例 2: 缺少 1 个 apiserver Pod -> FAIL
+	s.Cluster.Pods[5].Ready = true
+	s.Cluster.Pods = append(s.Cluster.Pods[:1], s.Cluster.Pods[2:]...)
+	results = check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Fail {
+		t.Fatalf("缺少 apiserver Pod 时应 FAIL，得到: %+v", results)
+	}
+}
+
+// REQ-004: CP-04 kube-vip Pod 数等于控制面节点数。
+func TestCP04KubeVipCountEqControlPlane(t *testing.T) {
+	p := &rules.Pack{Pack: "2.32", Rules: []rules.Rule{{
+		ID: "CP-04", Title: "kube-vip Pod 数", Status: "active", Mode: "judge", Scope: "cluster",
+		Field: "pods", Check: "count_eq_nodes",
+		Expect: map[string]string{"role": "control-plane", "selectors": "app.kubernetes.io/name=kube-vip,app=kube-vip", "pod_prefix": "kube-vip-"},
+	}}}
+	s := &snapshot.Snapshot{
+		Cluster: snapshot.Cluster{
+			Nodes: []snapshot.Node{
+				{Name: "cp-1", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+				{Name: "cp-2", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+				{Name: "cp-3", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+			},
+			Pods: []snapshot.Pod{
+				{Namespace: "kube-system", Name: "kube-vip-cp-1", Labels: map[string]string{"app.kubernetes.io/name": "kube-vip"}},
+				{Namespace: "kube-system", Name: "kube-vip-cp-2", Labels: map[string]string{"app.kubernetes.io/name": "kube-vip"}},
+				{Namespace: "kube-system", Name: "kube-vip-cp-3", Labels: map[string]string{"app.kubernetes.io/name": "kube-vip"}},
+			},
+		},
+	}
+	results := check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Pass || results[0].Actual != "3" {
+		t.Fatalf("3 个 kube-vip Pod 等于 3 个控制面节点应 PASS，得到: %+v", results)
+	}
+
+	// 负例：只有 2 个 kube-vip Pod -> FAIL
+	s.Cluster.Pods = s.Cluster.Pods[:2]
+	results = check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Fail || results[0].Actual != "2" || results[0].Expect != "3" {
+		t.Fatalf("2 个 kube-vip Pod 不等 3 应 FAIL，得到: %+v", results)
+	}
+}
+
+// REQ-004: CP-05 nginx-proxy Pod 数等于工作节点数。
+func TestCP05NginxProxyCountEqWorkers(t *testing.T) {
+	p := &rules.Pack{Pack: "2.32", Rules: []rules.Rule{{
+		ID: "CP-05", Title: "nginx-proxy Pod 数", Status: "active", Mode: "judge", Scope: "cluster",
+		Field: "pods", Check: "count_eq_nodes",
+		Expect: map[string]string{"role": "worker", "selectors": "k8s-app=nginx-proxy,app.kubernetes.io/name=nginx-proxy", "pod_prefix": "nginx-proxy-"},
+	}}}
+	s := &snapshot.Snapshot{
+		Cluster: snapshot.Cluster{
+			Nodes: []snapshot.Node{
+				{Name: "cp-1", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+				{Name: "cp-2", Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""}},
+				{Name: "w-1", Labels: map[string]string{}},
+				{Name: "w-2", Labels: map[string]string{}},
+			},
+			Pods: []snapshot.Pod{
+				{Namespace: "kube-system", Name: "nginx-proxy-w-1", Labels: map[string]string{"k8s-app": "nginx-proxy"}},
+				{Namespace: "kube-system", Name: "nginx-proxy-w-2", Labels: map[string]string{"k8s-app": "nginx-proxy"}},
+			},
+		},
+	}
+	results := check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Pass || results[0].Actual != "2" {
+		t.Fatalf("2 个 nginx-proxy Pod 等于 2 个工作节点应 PASS，得到: %+v", results)
+	}
+
+	// 负例：只有 1 个 nginx-proxy Pod -> FAIL
+	s.Cluster.Pods = s.Cluster.Pods[:1]
+	results = check.Run(p, s)
+	if len(results) != 1 || results[0].Status != check.Fail || results[0].Actual != "1" || results[0].Expect != "2" {
+		t.Fatalf("1 个 nginx-proxy Pod 不等 2 应 FAIL，得到: %+v", results)
+	}
+}

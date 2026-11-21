@@ -37,7 +37,178 @@
       "kubelet": "v1.36.4"
     }
   ],
-  "pods": [],
+  "pods": [
+    {
+      "namespace": "kube-system",
+      "name": "etcd-cp-1",
+      "node": "cp-1",
+      "labels": {
+        "component": "etcd"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "etcd-cp-2",
+      "node": "cp-2",
+      "labels": {
+        "component": "etcd"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "etcd-cp-3",
+      "node": "cp-3",
+      "labels": {
+        "component": "etcd"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-apiserver-cp-1",
+      "node": "cp-1",
+      "labels": {
+        "component": "kube-apiserver"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-apiserver-cp-2",
+      "node": "cp-2",
+      "labels": {
+        "component": "kube-apiserver"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-apiserver-cp-3",
+      "node": "cp-3",
+      "labels": {
+        "component": "kube-apiserver"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-controller-manager-cp-1",
+      "node": "cp-1",
+      "labels": {
+        "component": "kube-controller-manager"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-controller-manager-cp-2",
+      "node": "cp-2",
+      "labels": {
+        "component": "kube-controller-manager"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-controller-manager-cp-3",
+      "node": "cp-3",
+      "labels": {
+        "component": "kube-controller-manager"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-scheduler-cp-1",
+      "node": "cp-1",
+      "labels": {
+        "component": "kube-scheduler"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-scheduler-cp-2",
+      "node": "cp-2",
+      "labels": {
+        "component": "kube-scheduler"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-scheduler-cp-3",
+      "node": "cp-3",
+      "labels": {
+        "component": "kube-scheduler"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-vip-cp-1",
+      "node": "cp-1",
+      "labels": {
+        "app.kubernetes.io/name": "kube-vip"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-vip-cp-2",
+      "node": "cp-2",
+      "labels": {
+        "app.kubernetes.io/name": "kube-vip"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "kube-vip-cp-3",
+      "node": "cp-3",
+      "labels": {
+        "app.kubernetes.io/name": "kube-vip"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "nginx-proxy-w-1",
+      "node": "w-1",
+      "labels": {
+        "k8s-app": "nginx-proxy"
+      },
+      "ready": true,
+      "restarts": 0
+    },
+    {
+      "namespace": "kube-system",
+      "name": "nginx-proxy-w-2",
+      "node": "w-2",
+      "labels": {
+        "k8s-app": "nginx-proxy"
+      },
+      "ready": true,
+      "restarts": 0
+    }
+  ],
   "config": {
     "etcd_version": "3.6.14",
     "kube_proxy_mode": "nftables",

@@ -40,8 +40,9 @@
 | check | expect | 含义 |
 |---|---|---|
 | `equals` | `value` | 实际值等于 `value` |
-| `count` | `value`，可选 `role` | 对象数量等于 `value` |
-| `count_eq_nodes` | `role` | 对象数量等于该角色节点数 |
+| `count` | `value`，可选 `role`、`selectors`、`pod_prefix` | 对象数量等于 `value` |
+| `count_eq_nodes` | `role`，可选 `selectors`、`pod_prefix` | 对象数量等于该角色节点数 |
+| `control_plane_pods_ready` | `role`，可选 `components` | 控制面核心组件（kube-apiserver/kube-controller-manager/kube-scheduler）的 Pod 数各等于控制面节点数且全部 Ready；任一数量不符或未 Ready，判 FAIL |
 | `all_ready` | `selectors` | 目标节点上匹配任一选择器的 Pod 全部 Ready；一个都没有视为 FAIL（未部署）。实际值为 `Ready 数/总数`。`selectors` 为逗号分隔的 `key=value` 列表（k8s 标签键值不含逗号，D-015） |
 | `no_restarts` | `window` | 窗口内重启次数为 0，单位 `m` |
 | `set` | — | 字段存在且非空。缺失即 FAIL，实际值显示为“（缺失）” |

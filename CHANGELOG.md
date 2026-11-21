@@ -4,7 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+- 控制面规模与组件检查（REQ-004，D-018）：2.32 规则包新增 CP-02（etcd 成员数为 3）、CP-03（kube-apiserver、kube-controller-manager、kube-scheduler Pod 数各等于控制面节点数且全部 Ready，新判定 `control_plane_pods_ready`）、CP-04（kube-vip Pod 数等于控制面节点数，`count_eq_nodes`）、CP-05（nginx-proxy Pod 数等于工作节点数，`count_eq_nodes`）；`rules_rev` 升至 3。
+- 快照样本（REQ-004，D-018）：正例 `cluster.json` 补齐控制面核心组件、kube-vip 与 nginx-proxy Pod 清单；新增 CP-02～05 对应负例快照，并同步更新既有负例快照。
+
 ### Notes
+- 决策留痕：补记 D-018（批准 REQ-004～REQ-006 期望值与启动推进；backlog REQ-004～REQ-006 置「待开始」）。
 - 决策留痕：补记 D-017（POL-01 统一 `false`；POL-03 结果判定拆 03a/03b；OS 内核参数 OS-01～03 纳入草案；NODE-05 维持 info）。
 - 需求起草：REQ-004～009 草稿（控制面 CP-02～07、系统组件 SYS-01～03、NTP POL-03a/b、OS 参数 OS-01～03、NODE-01 与 POL-01），待人确认。
 
