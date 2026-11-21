@@ -5,11 +5,11 @@
 
 ## 一、规则条目
 
-### GPU-01（REQ-001 标准 1）device plugin Pod 全部 Ready — 已实施
+### GPU-01（REQ-001 标准 1；REQ-003 修正）device plugin Pod 全部 Ready — 已实施
 
 - scope：node（取 `nvidia.com/gpu.present=true` 的节点）
-- check：`all_ready`，选择器 `app.kubernetes.io/name=nvidia-device-plugin`
-- 待实测：选择器取 NVIDIA k8s-device-plugin Helm 默认标签；GPU Operator 部署的标签可能不同，实施前须在真实集群核对（见 `rules/gpu/rules.yaml` GPU-01 source）。
+- check：`all_ready`，选择器列表 `app=nvidia-device-plugin-daemonset,app.kubernetes.io/name=nvidia-device-plugin`（逗号分隔，匹配任一；D-015）
+- 已实测：GPU Operator v26.7.2 部署的 device plugin Pod 标签为 `app=nvidia-device-plugin-daemonset`（sd1 测试环境，2026-11-21）；独立 Helm k8s-device-plugin 默认标签为 `app.kubernetes.io/name=nvidia-device-plugin`。
 
 ### GPU-02（REQ-001 标准 2）allocatable 与 GFD 卡数一致 — 已实施
 

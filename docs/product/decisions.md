@@ -131,3 +131,11 @@
 - 影响：`rules/gpu/rules.yaml`、`testdata/positive/gpu/`、`testdata/negative/gpu/`、`internal/check`、`internal/collect`、`internal/snapshot`、`cmd/kready`、`docs/design/`（rule-schema、snapshot-format、output-contract）；REQ-001、REQ-002。
 - 依据：人回复"REQ-001/REQ-002，确认是"（本次会话，2026-11-21）。
 - 决策人：kitsnail
+
+### D-015 GPU-01 多选择器适配 GPU Operator（2026-11-21）
+
+- 决策：`all_ready` 的 `expect.selector`（单个 key=value）改为 `expect.selectors`（逗号分隔的 key=value 列表，匹配任一即纳入判定）；GPU-01 选择器改为 `app=nvidia-device-plugin-daemonset,app.kubernetes.io/name=nvidia-device-plugin`，`rules_rev` 升至 4。匹配到的 Pod 须全部 Ready、零匹配仍判 FAIL（未部署）的既有语义不变。
+- 原因：GPU Operator 部署的 device plugin Pod 标签为 `app=nvidia-device-plugin-daemonset`，原选择器匹配不到，GPU-01 在此类集群误报 FAIL（sd1 测试环境实测复现：device plugin 4/4 Ready，GPU-01 报 0/0，结论「异常」）。k8s 标签键值不含逗号，分隔符无歧义。
+- 影响：`rules/gpu/rules.yaml`、`testdata/positive/gpu/`、`internal/check`、`docs/design/rule-schema.md`、`docs/rules/gpu-draft.md`；REQ-003。
+- 依据：人多选择器方案选择并回复"确认"（本次会话，2026-11-21）。
+- 决策人：kitsnail

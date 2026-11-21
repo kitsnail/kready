@@ -11,6 +11,7 @@
 - 快照扩展（REQ-001，D-014）：节点新增 `taints`、`allocatable`，Pod 新增 `node`、`labels`；实时模式经 `kubectl get pods -A` 采集 Pod 清单。
 
 ### Changed
+- GPU-01 适配 GPU Operator 部署（REQ-003，D-015）：`all_ready` 选择器改为 `selectors`（逗号分隔的 key=value 列表，匹配任一）；GPU-01 同时匹配 `app=nvidia-device-plugin-daemonset`（GPU Operator，实测）与 `app.kubernetes.io/name=nvidia-device-plugin`（独立 Helm），修复 GPU Operator 集群误报「未部署 FAIL」；`rules_rev` 升至 4。
 - 输出契约 v4（REQ-001，D-014）：结论新增「未运行任何规则」（规则包无 active 规则时，退出码 0）；`schema_version` 升至 4。
 - 决策留痕：补记 D-012（PR #17 正文已引用，此前未入册）；起草 REQ-001、REQ-002（GPU 检查需求，草稿待人确认）。
 - Agent 自主推进（D-011）：AGENTS.md 新增 REQ 确认后的 A 类授权（检查逻辑）、独立审查合并条件、澄清/自动推进/升级三条工作方式；`docs/product/README.md` 新增字段级权限。`rules/`、`testdata/` 期望值仍须人工批准。

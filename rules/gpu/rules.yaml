@@ -1,7 +1,7 @@
 # GPU 检测规则包（D-012）。独立于 kubespray 2.32，仅 `kready check --pack gpu` 显式运行。
-# 规则条目经 REQ-001/REQ-002 确认（D-014）。变更属 B 类，需人工确认。
+# 规则条目经 REQ-001/REQ-002 确认（D-014）；GPU-01 选择器经 REQ-003 确认（D-015）。变更属 B 类，需人工确认。
 pack: "gpu"
-rules_rev: 3
+rules_rev: 4
 # GPU 包不做 kubelet 选包，applies_to 留空，选包走 --pack gpu。
 applies_to:
   kubelet: []
@@ -12,11 +12,11 @@ rules:
     mode: judge
     scope: node
     node_label: nvidia.com/gpu.present=true
-    source: REQ-001 标准 1。Pod 选择器取 NVIDIA k8s-device-plugin Helm 默认标签 app.kubernetes.io/name=nvidia-device-plugin；GPU Operator 部署的标签可能不同，实施前须在真实集群核对（见 docs/rules/gpu-draft.md GPU-01 待实测）
+    source: REQ-003。匹配任一部署方式：GPU Operator（app=nvidia-device-plugin-daemonset，sd1 环境实测）或独立 Helm（app.kubernetes.io/name=nvidia-device-plugin，k8s-device-plugin 默认标签）
     field: pods
     check: all_ready
     expect:
-      selector: app.kubernetes.io/name=nvidia-device-plugin
+      selectors: app=nvidia-device-plugin-daemonset,app.kubernetes.io/name=nvidia-device-plugin
 
   - id: GPU-02
     title: 可分配 GPU 数与 GFD 卡数标签一致
