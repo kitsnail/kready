@@ -2,6 +2,14 @@
 
 本文件遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。版本号遵循 SemVer，0.x 阶段的规则见 `docs/design/versioning.md`。
 
+## [0.1.2](https://github.com/kitsnail/kready/compare/v0.1.1...v0.1.2) (2026-11-21)
+
+
+### Features
+
+* **rules:** 控制面规模与组件检查 CP-02～CP-05（REQ-004，D-018） ([96d22dd](https://github.com/kitsnail/kready/commit/96d22dd221eed708d8a6136247b4096684ca3a68))
+* **rules:** 控制面规模与组件检查 CP-02～CP-05（REQ-004，D-018） ([72de747](https://github.com/kitsnail/kready/commit/72de74744bdf73d564eb21d19538a67e53058a5c))
+
 ## [Unreleased]
 
 ### Added
