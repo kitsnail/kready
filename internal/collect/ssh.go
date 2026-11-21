@@ -2,10 +2,12 @@ package collect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -148,6 +150,10 @@ func (r *SSHRunner) Run(ctx context.Context, ip, commandID string) (string, erro
 	}()
 	select {
 	case res := <-done:
+		// 退出码模式（Result: exit_code）：非 0 退出码是判定数据，不是错误。
+		if TakesExitCode(commandID) {
+			return exitCodeOf(res.err)
+		}
 		if res.err != nil {
 			return "", fmt.Errorf("命令 %s 执行失败: %w", commandID, res.err)
 		}
@@ -155,6 +161,22 @@ func (r *SSHRunner) Run(ctx context.Context, ip, commandID string) (string, erro
 	case <-ctx.Done():
 		return "", fmt.Errorf("命令 %s 超时", commandID)
 	}
+}
+
+// exitCoder 是携带远端命令退出码的错误，*ssh.ExitError 满足该接口。
+type exitCoder interface{ ExitStatus() int }
+
+// exitCodeOf 把命令执行结果转为退出码字符串（"0"、"9"…）。
+// 仅远端命令退出（*ssh.ExitError）转为值；连接等其它失败仍是错误，由调用方记为 ERROR。
+func exitCodeOf(err error) (string, error) {
+	if err == nil {
+		return "0", nil
+	}
+	var ee exitCoder
+	if errors.As(err, &ee) {
+		return strconv.Itoa(ee.ExitStatus()), nil
+	}
+	return "", err
 }
 
 // Close 关闭所有已建立的连接。

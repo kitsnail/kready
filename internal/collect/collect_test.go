@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -47,17 +48,57 @@ func TestArgvReturnsCopy(t *testing.T) {
 
 // 规则包声明的采集命令必须全部在白名单中，否则运行时必然报错。
 func TestRulePackCommandsAreWhitelisted(t *testing.T) {
-	p, err := rules.Load("2.32")
-	if err != nil {
-		t.Fatal(err)
+	for _, name := range []string{"2.32", "gpu"} {
+		t.Run(name, func(t *testing.T) {
+			p, err := rules.Load(name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, id := range p.CollectIDs() {
+				if _, err := Argv(id); err != nil {
+					t.Errorf("规则命令 %s 不在白名单中: %v", id, err)
+				}
+			}
+			if len(p.CollectIDs()) == 0 {
+				t.Error("规则包应声明至少一条采集命令")
+			}
+		})
 	}
-	for _, id := range p.CollectIDs() {
-		if _, err := Argv(id); err != nil {
-			t.Errorf("规则命令 %s 不在白名单中: %v", id, err)
+}
+
+// 退出码模式：gpu-nvidia-smi-list 以退出码为结果，其余命令以输出为结果（REQ-002，D-014）。
+func TestTakesExitCode(t *testing.T) {
+	if !TakesExitCode("gpu-nvidia-smi-list") {
+		t.Error("gpu-nvidia-smi-list 应为 exit_code 模式")
+	}
+	for _, id := range []string{"sysctl-inotify-instances", "sshd-password-auth", "unattended-upgrades-active"} {
+		if TakesExitCode(id) {
+			t.Errorf("%s 不应为 exit_code 模式", id)
 		}
 	}
-	if len(p.CollectIDs()) == 0 {
-		t.Error("规则包应声明至少一条采集命令")
+	if TakesExitCode("rm-rf") {
+		t.Error("未知命令 ID 不应判为 exit_code 模式")
+	}
+}
+
+// fakeExitError 模拟 *ssh.ExitError（同样实现 ExitStatus() int）。
+type fakeExitError struct{ code int }
+
+func (f fakeExitError) Error() string   { return "exit status " + strconv.Itoa(f.code) }
+func (f fakeExitError) ExitStatus() int { return f.code }
+
+// 退出码模式取值：成功为 "0"；远端命令退出（*ssh.ExitError）取其退出码，不是错误；
+// 其它失败（如连接错误）仍是错误。
+func TestExitCodeOf(t *testing.T) {
+	if got, err := exitCodeOf(nil); err != nil || got != "0" {
+		t.Errorf("成功应得 0，得到 %q（%v）", got, err)
+	}
+	if got, err := exitCodeOf(fakeExitError{code: 9}); err != nil || got != "9" {
+		t.Errorf("退出码 9 应得 \"9\"，得到 %q（%v）", got, err)
+	}
+	connErr := errors.New("SSH 连接失败")
+	if _, err := exitCodeOf(connErr); err == nil {
+		t.Error("连接失败应保持为错误")
 	}
 }
 

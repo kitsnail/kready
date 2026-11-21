@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- GPU 驱动加载检查（REQ-002，D-014）：GPU-05 经白名单命令 `gpu-nvidia-smi-list`（`nvidia-smi -L`）判定驱动加载，退出码 0 判正常、非 0 判异常；白名单命令新增 `exit_code` 结果方式（非 0 退出码是判定数据，不是采集错误），`rules_rev` 升至 3。
 - GPU 规则包骨架（D-012）：新增 `kready check --pack gpu` 显式指定规则包；`rules/gpu/rules.yaml` 仅含头部，尚无规则。缺省 `--pack` 时选包行为不变。
 - GPU 规则包首批规则（REQ-001，D-014）：GPU-01 device plugin Pod 全部 Ready（选择器 `app.kubernetes.io/name=nvidia-device-plugin`）、GPU-02 可分配 GPU 数与 `nvidia.com/gpu.count` 标签一致（新判定 `equals_label`）、GPU-03 卡数标签存在、GPU-04 污点列出（INFO），`rules_rev` 升至 2。规则声明 `node_label` 但无匹配节点时输出 SKIP，不影响结论。
 - 快照扩展（REQ-001，D-014）：节点新增 `taints`、`allocatable`，Pod 新增 `node`、`labels`；实时模式经 `kubectl get pods -A` 采集 Pod 清单。

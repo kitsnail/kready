@@ -51,12 +51,16 @@ testdata/
 
 ## nodes/<node>.json
 
-键为白名单命令 ID（与规则 `collect.command` 一致），值为该命令去除首尾空白后的输出。
+键为白名单命令 ID（与规则 `collect.command` 一致），值按命令的结果方式（见 `rule-schema.md` 白名单）：
+
+- `output`（默认）：命令输出，去除首尾空白；
+- `exit_code`：命令退出码的十进制字符串（如 `"0"`、`"9"`），非 0 不是采集错误。
 
 ```json
 {
   "sysctl-inotify-instances": "1280",
-  "sshd-password-auth": "PasswordAuthentication no"
+  "sshd-password-auth": "PasswordAuthentication no",
+  "gpu-nvidia-smi-list": "0"
 }
 ```
 

@@ -30,11 +30,11 @@
 - 输出：GPU 节点的污点列表（`key=value:effect`，逗号分隔；无污点为“无”），不判定。
 - 快照已扩展节点 `taints`、`allocatable` 字段与 Pod `node`、`labels` 字段（见 `docs/design/snapshot-format.md`）。
 
-### GPU-05（REQ-002 标准 1）驱动加载 — 随 REQ-002 实施
+### GPU-05（REQ-002 标准 1）驱动加载 — 已实施
 
 - scope：node
 - collect：`command: gpu-nvidia-smi-list`，`as_root: false`
-- check：`equals`，期望值为命令退出码 `0`（白名单新增 exit_code 取结果方式）。
+- check：`equals`，期望值为命令退出码 `0`（白名单 exit_code 结果方式）。
 - 待实测：驱动未加载时的确切退出码（NVIDIA 文档为 9）。判定只看 0 与非 0，具体值只影响 `actual` 文字。
 
 ### GPU-06（REQ-002 标准 2）物理卡数一致（**暂缓**）
@@ -46,7 +46,7 @@
 | ID | 命令 | 说明 |
 |---|---|---|
 | `gpu-lspci-nvidia-vga` | `lspci -d 10de::0300` | **暂缓**：随 GPU-06 一并实施时再申请批准，本轮不申请 |
-| `gpu-nvidia-smi-list` | `nvidia-smi -L` | 驱动加载检查，退出码为判定依据（D-014 批准，随 REQ-002 实施） |
+| `gpu-nvidia-smi-list` | `nvidia-smi -L` | 驱动加载检查，退出码为判定依据（D-014 批准，已实施，exit_code 模式） |
 
 两条均为只读，不含写操作。
 
