@@ -1,7 +1,7 @@
 # GPU 检测规则包（D-012）。独立于 kubespray 2.32，仅 `kready check --pack gpu` 显式运行。
 # 规则条目经 REQ-001/REQ-002 确认（D-014）。变更属 B 类，需人工确认。
 pack: "gpu"
-rules_rev: 2
+rules_rev: 3
 # GPU 包不做 kubelet 选包，applies_to 留空，选包走 --pack gpu。
 applies_to:
   kubelet: []
@@ -48,3 +48,17 @@ rules:
     node_label: nvidia.com/gpu.present=true
     source: REQ-001 标准 4。仅列出污点，不判定
     field: taints
+
+  - id: GPU-05
+    title: NVIDIA 驱动已加载（nvidia-smi -L 退出码 0）
+    status: active
+    mode: judge
+    scope: node
+    node_label: nvidia.com/gpu.present=true
+    source: REQ-002 标准 1。退出码经白名单命令 gpu-nvidia-smi-list（nvidia-smi -L，exit_code 模式）采集（D-014）。驱动未加载时的确切退出码待实测（NVIDIA 文档为 9），判定只看 0 与非 0
+    collect:
+      command: gpu-nvidia-smi-list
+      as_root: false
+    check: equals
+    expect:
+      value: "0"

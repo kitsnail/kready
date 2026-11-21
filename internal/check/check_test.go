@@ -120,6 +120,30 @@ func TestNoActiveRulesRunsNothing(t *testing.T) {
 	}
 }
 
+// GPU-05 采集数据缺失：报 ERROR（source=collect），结论为未能确认，不判 FAIL（REQ-002）。
+func TestGPUCollectMissingIsUnconfirmed(t *testing.T) {
+	p := loadPack(t, "gpu")
+	s, err := snapshot.Load(filepath.Join(testdataRoot, "positive", "gpu"))
+	if err != nil {
+		t.Fatalf("加载正例快照: %v", err)
+	}
+	delete(s.Nodes, "gpu-1")
+
+	results := check.Run(p, s)
+	found := false
+	for _, r := range results {
+		if r.ID == "GPU-05" && r.Target == "gpu-1" && r.Status == check.Error {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("gpu-1 缺采集数据应对 GPU-05 报 ERROR；结果: %v", results)
+	}
+	if got := check.Conclusion(results); got != "未能确认" {
+		t.Errorf("结论 = %q，期望 未能确认", got)
+	}
+}
+
 // 声明了 node_label 的规则在无匹配节点时输出 SKIP，不影响结论（REQ-001）。
 func TestNodeLabelNoMatchIsSkip(t *testing.T) {
 	p := loadPack(t, "gpu")
