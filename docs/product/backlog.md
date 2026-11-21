@@ -49,30 +49,30 @@
 
 ### REQ-004 控制面规模与组件检查（CP-02～CP-05）
 
-- 状态：草稿
+- 状态：进行中
 - 优先级：高
 - 背景：草案 CP-02～05（etcd 成员数 3、apiserver/kcm/scheduler Pod 数等于控制面节点数且全部 Ready、kube-vip 与 nginx-proxy 镜像 Pod 数）已定稿且采集路径清晰（快照 Pod 清单 + 节点角色标签），但未实现，控制面规模缺陷目前检不出。
 - 期望结果：`kready check` 对 CP-02～05 报出判定结果；控制面规模或组件 Pod 异常时报 FAIL 并列出实际值与期望值。
 - 验收标准：见 `acceptance.md` 中的 REQ-004
-- 关联：CP-02、CP-03、CP-04、CP-05（规则条目与期望值需人批准后写入 `rules/`）
+- 关联：CP-02、CP-03、CP-04、CP-05、D-018
 
 ### REQ-005 控制面资源配置检查（CP-06～CP-07）
 
-- 状态：草稿
+- 状态：待开始
 - 优先级：高
 - 背景：草案 CP-06～07（kcm 内存 request/limit 均设置、kcm startupProbe 已配置）需快照扩展 Deployment/Pod 资源字段，实现后控制面资源配置缺陷可自动检出。CP-08 已实现（快照离线判定可用），但 live 采集的集群级 config 无来源（`internal/collect/live.go` 留空），线上运行报 ERROR，补齐 config 采集另立需求。
 - 期望结果：`kready check` 对 CP-06～07 报出判定结果；资源配置缺失时报 FAIL。
 - 验收标准：见 `acceptance.md` 中的 REQ-005
-- 关联：CP-06、CP-07（规则条目与期望值需人批准后写入 `rules/`）
+- 关联：CP-06、CP-07、D-018
 
 ### REQ-006 系统组件健康检查（SYS-01～SYS-03）
 
-- 状态：草稿
+- 状态：待开始
 - 优先级：高
 - 背景：草案 SYS-01～03（kube-system Pod 全部 Ready 无 CrashLoopBackOff、近 15 分钟容器重启 0 次、Cilium/kube-proxy/nodelocaldns DaemonSet 每节点一个 Pod 且 Ready）是交付验收最直接的信号，目前未实现。
 - 期望结果：`kready check` 对 SYS-01～03 报出判定结果；系统 Pod 异常、重启或 DaemonSet 缺副本时报 FAIL。
 - 验收标准：见 `acceptance.md` 中的 REQ-006
-- 关联：SYS-01、SYS-02、SYS-03（规则条目与期望值需人批准后写入 `rules/`）
+- 关联：SYS-01、SYS-02、SYS-03、D-018
 
 ### REQ-007 NTP 结果判定（POL-03a/POL-03b）
 

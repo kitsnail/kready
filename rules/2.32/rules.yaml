@@ -2,7 +2,7 @@
 # 规则 schema 见 docs/design/rule-schema.md。运行时只读取本文件，不读取部署源文件。
 # 变更属 B 类，需人工确认。
 pack: "2.32"
-rules_rev: 2
+rules_rev: 3
 # 适用的 kubelet 版本（精确匹配）。以控制面节点版本为基线；不在此列 → 无适用规则。
 applies_to:
   kubelet:
@@ -100,6 +100,57 @@ rules:
     expect:
       value: "3"
       role: control-plane
+
+  - id: CP-02
+    title: etcd 成员数
+    status: active
+    mode: judge
+    scope: cluster
+    source: new-cluster-config-guide §2.1
+    field: pods
+    check: count
+    expect:
+      value: "3"
+      selectors: component=etcd,k8s-app=etcd
+      pod_prefix: etcd-
+
+  - id: CP-03
+    title: apiserver / kcm / scheduler Pod 数与就绪状态
+    status: active
+    mode: judge
+    scope: cluster
+    source: new-cluster-config-guide §7.1
+    field: pods
+    check: control_plane_pods_ready
+    expect:
+      role: control-plane
+      components: kube-apiserver,kube-controller-manager,kube-scheduler
+
+  - id: CP-04
+    title: kube-vip Pod 数
+    status: active
+    mode: judge
+    scope: cluster
+    source: fixes/README.md
+    field: pods
+    check: count_eq_nodes
+    expect:
+      role: control-plane
+      selectors: app.kubernetes.io/name=kube-vip,app=kube-vip
+      pod_prefix: kube-vip-
+
+  - id: CP-05
+    title: nginx-proxy Pod 数
+    status: active
+    mode: judge
+    scope: cluster
+    source: fixes/README.md
+    field: pods
+    check: count_eq_nodes
+    expect:
+      role: worker
+      selectors: k8s-app=nginx-proxy,app.kubernetes.io/name=nginx-proxy
+      pod_prefix: nginx-proxy-
 
   - id: CP-08
     title: etcd 后端配额

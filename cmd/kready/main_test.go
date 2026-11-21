@@ -270,6 +270,20 @@ func TestNoWorkerNodesPassesVER01(t *testing.T) {
 		}
 	}
 	c["nodes"] = cp
+	var cpPods []any
+	if pods, ok := c["pods"].([]any); ok {
+		for _, raw := range pods {
+			p := raw.(map[string]any)
+			nodeName, _ := p["node"].(string)
+			for _, cpNode := range cp {
+				if cpNode.(map[string]any)["name"] == nodeName {
+					cpPods = append(cpPods, raw)
+					break
+				}
+			}
+		}
+		c["pods"] = cpPods
+	}
 	out, err := json.Marshal(c)
 	if err != nil {
 		t.Fatalf("编码 cluster.json: %v", err)
@@ -423,6 +437,20 @@ func TestNodeCountIsNotJudged(t *testing.T) {
 		}
 	}
 	c["nodes"] = kept
+	var keptPods []any
+	if pods, ok := c["pods"].([]any); ok {
+		for _, raw := range pods {
+			p := raw.(map[string]any)
+			nodeName, _ := p["node"].(string)
+			for _, cpNode := range kept {
+				if cpNode.(map[string]any)["name"] == nodeName {
+					keptPods = append(keptPods, raw)
+					break
+				}
+			}
+		}
+		c["pods"] = keptPods
+	}
 	out, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		t.Fatal(err)

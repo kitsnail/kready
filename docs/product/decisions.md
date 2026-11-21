@@ -159,3 +159,14 @@
 - 影响：`rules/2.32/rules.yaml` 零改动；`docs/rules/2.32-draft.md` §八.6 记录裁定。
 - 依据：PR #27（提交 `e12e50f`，草案 §八.6 记录裁定内容）；本条为补记入册。
 - 决策人：kitsnail
+
+### D-018 REQ-004～REQ-006 期望值批准与启动（2026-11-21）
+
+- 决策：
+  1. 批准 REQ-004（控制面规模 CP-02～05：etcd 成员数 3、apiserver/kcm/scheduler Pod 数各等于控制面节点数且全部 Ready、kube-vip Pod 数等于控制面节点数、nginx-proxy Pod 数等于工作节点数）、REQ-005（控制面资源 CP-06～07：kcm 内存 request/limit 均设置、kcm startupProbe 已配置）、REQ-006（系统组件健康 SYS-01～03：kube-system Pod 全部 Ready 且无 CrashLoopBackOff、15 分钟容器重启 0 次、Cilium/kube-proxy/nodelocaldns DaemonSet 全节点 Ready）的规则条目与期望值。
+  2. REQ-004～REQ-006 在 `backlog.md` 中置为「待开始」，由 Agent 按顺序自主推进；当前切片优先实施 REQ-004。
+- 原因：人确认批准高优先级三项的期望值，并授权启动实施。
+- 影响：`rules/2.32/rules.yaml`、`testdata/`、`internal/check`、`docs/design/rule-schema.md`；REQ-004～REQ-006。
+- 依据：人于 2026-11-21 会话选择确认并授权。
+- 决策人：kitsnail
+
